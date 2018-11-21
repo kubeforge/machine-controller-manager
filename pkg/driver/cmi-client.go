@@ -34,19 +34,15 @@ import (
 )
 
 type cmiClient interface {
-	// CreateMachine(ctx context.Context, req *cmipb.CreateMachineRequest) (*cmipb.CreateMachineResponse, error)
-	// DeleteMachine(ctx context.Context, req *cmipb.DeleteMachineRequest) (*cmipb.DeleteMachineResponse, error)
-	// ListMachines(ctx context.Context, req *cmipb.ListMachinesRequest) (*cmipb.ListMachinesResponse, error)
-
 	CreateMachine(ctx context.Context) (string, string, error)
 	DeleteMachine(ctx context.Context) error
 	ListMachines(ctx context.Context) (string, error)
 }
 
-type cmiDriverClient struct {
-	driverName           string
-	machineClientCreator machineClientCreator
-	machineClass         *v1alpha1.AWSMachineClass
+type CmiDriverClient struct {
+	DriverName           string
+	MachineClientCreator machineClientCreator
+	MachineClass         *v1alpha1.AWSMachineClass
 	CloudConfig          *corev1.Secret
 	UserData             string
 	MachineID            string
@@ -58,6 +54,8 @@ type machineClientCreator func(driverName string) (
 	closer io.Closer,
 	err error,
 )
+
+type VMs map[string]string
 
 func newMachineClient(driverName string) (machineClient cmipb.MachineClient, closer io.Closer, err error) {
 	var conn *grpc.ClientConn
@@ -71,11 +69,11 @@ func newMachineClient(driverName string) (machineClient cmipb.MachineClient, clo
 }
 
 // NewCmiDriverClient
-func NewCmiDriverClient(machineID, driverName string, secret *corev1.Secret, machineClass interface{}, machineName string) *cmiDriverClient {
-	c := &cmiDriverClient{
-		driverName:           driverName,
-		machineClientCreator: newMachineClient,
-		machineClass:         machineClass.(*v1alpha1.AWSMachineClass),
+func NewCmiDriverClient(machineID string, driverName string, secret *corev1.Secret, machineClass interface{}, machineName string) *CmiDriverClient {
+	c := &CmiDriverClient{
+		DriverName:           driverName,
+		MachineClientCreator: newMachineClient,
+		MachineClass:         machineClass.(*v1alpha1.AWSMachineClass),
 		CloudConfig:          secret,
 		UserData:             string(secret.Data["userData"]),
 		MachineID:            machineID,
@@ -84,10 +82,10 @@ func NewCmiDriverClient(machineID, driverName string, secret *corev1.Secret, mac
 	return c
 }
 
-func (c *cmiDriverClient) CreateMachine(ctx context.Context) (string, string, error) {
-	glog.V(4).Info("Calling CreateMachine rpc")
+func (c *CmiDriverClient) CreateMachine() (string, string, error) {
+	glog.V(2).Info("Calling CreateMachine rpc ........", c)
 
-	machineClient, closer, err := c.machineClientCreator(c.driverName)
+	machineClient, closer, err := c.MachineClientCreator(c.DriverName)
 	if err != nil {
 		return "", "", err
 	}
@@ -96,23 +94,34 @@ func (c *cmiDriverClient) CreateMachine(ctx context.Context) (string, string, er
 	req := &cmipb.CreateMachineRequest{
 		Providerconfig: "MachineClass.ProviderConfig here",
 	}
+	ctx := context.Background()
 	resp, err := machineClient.CreateMachine(ctx, req)
 	if err != nil {
 		return "", "", err
 	}
 	fmt.Println(resp)
 
-	return "", "", status.Error(codes.Unimplemented, "")
+	return resp.ProviderID, resp.Name, nil
 }
 
-func (c *cmiDriverClient) DeleteMachine(ctx context.Context, req *cmipb.DeleteMachineRequest) (*cmipb.DeleteMachineResponse, error) {
+func (c *CmiDriverClient) DeleteMachine() error {
 	glog.V(4).Info("Calling DeleteMachine rpc")
-	return nil, status.Error(codes.Unimplemented, "")
+	return nil
 }
 
-func (c *cmiDriverClient) ListMachines(ctx context.Context, req *cmipb.ListMachinesRequest) (*cmipb.ListMachinesResponse, error) {
+func (c *CmiDriverClient) ListMachine() ([]string, error) {
 	glog.V(4).Info("Calling ListMachine rpc")
 	return nil, status.Error(codes.Unimplemented, "")
+}
+
+func (c *CmiDriverClient) GetVMs(machineID string) (map[string]string, error) {
+	glog.V(4).Info("Calling ListMachine rpc")
+	return nil, nil
+}
+
+func (c *CmiDriverClient) GetExisting() (string, error) {
+	glog.V(4).Info("Calling GetExisting  rpc")
+	return c.MachineID, nil
 }
 
 func newGrpcConn(driverName string) (*grpc.ClientConn, error) {

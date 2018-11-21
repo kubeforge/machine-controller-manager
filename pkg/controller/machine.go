@@ -143,8 +143,11 @@ func (c *controller) reconcileClusterMachine(machine *v1alpha1.Machine) error {
 		return err
 	}
 
-	driver := driver.NewDriver(machine.Spec.ProviderID, secretRef, machine.Spec.Class.Kind, MachineClass, machine.Name)
-	actualProviderID, err := driver.GetExisting()
+	//driver := driver.NewDriver(machine.Spec.ProviderID, secretRef, machine.Spec.Class.Kind, //MachineClass, machine.Name)
+
+	driver := driver.NewCmiDriverClient("machineID", "driverName", secretRef, MachineClass, "machineName")
+
+	actualProviderID, err := "ActualProviderId", nil
 	if err != nil {
 		return err
 	} else if actualProviderID == "fake" {
@@ -168,7 +171,7 @@ func (c *controller) reconcileClusterMachine(machine *v1alpha1.Machine) error {
 
 	if machine.DeletionTimestamp != nil {
 		// Processing of delete event
-		if err := c.machineDelete(machine, driver); err != nil {
+		if err := c.machineDelete(machine, *driver); err != nil {
 			return err
 		}
 	} else if machine.Status.CurrentStatus.TimeoutActive {
@@ -181,7 +184,7 @@ func (c *controller) reconcileClusterMachine(machine *v1alpha1.Machine) error {
 		if machine.Status.CurrentStatus.Phase == v1alpha1.MachineFailed {
 			return nil
 		} else if actualProviderID == "" {
-			if err := c.machineCreate(machine, driver); err != nil {
+			if err := c.machineCreate(machine, *driver); err != nil {
 				return err
 			}
 		} else if actualProviderID != machine.Spec.ProviderID {
@@ -311,10 +314,10 @@ func (c *controller) updateMachineState(machine *v1alpha1.Machine) (*v1alpha1.Ma
 	Machine operations - Create, Update, Delete
 */
 
-func (c *controller) machineCreate(machine *v1alpha1.Machine, driver driver.Driver) error {
+func (c *controller) machineCreate(machine *v1alpha1.Machine, driver driver.CmiDriverClient) error {
 	glog.V(2).Infof("Creating machine %s, please wait!", machine.Name)
 
-	actualProviderID, nodeName, err := driver.Create()
+	actualProviderID, nodeName, err := driver.CreateMachine()
 	if err != nil {
 		glog.Errorf("Error while creating machine %s: %s", machine.Name, err.Error())
 		lastOperation := v1alpha1.LastOperation{
@@ -411,7 +414,7 @@ func (c *controller) machineUpdate(machine *v1alpha1.Machine, actualProviderID s
 	return nil
 }
 
-func (c *controller) machineDelete(machine *v1alpha1.Machine, driver driver.Driver) error {
+func (c *controller) machineDelete(machine *v1alpha1.Machine, driver driver.CmiDriverClient) error {
 	var err error
 
 	if finalizers := sets.NewString(machine.Finalizers...); finalizers.Has(DeleteFinalizerName) {
@@ -484,7 +487,7 @@ func (c *controller) machineDelete(machine *v1alpha1.Machine, driver driver.Driv
 				}
 				glog.V(2).Infof("Drain successful for machine %s - %v %v", machine.Name, buf, errBuf)
 			}
-			err = driver.Delete()
+			err = driver.DeleteMachine()
 		}
 
 		if err != nil {
