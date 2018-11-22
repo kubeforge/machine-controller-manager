@@ -42,7 +42,7 @@ type cmiClient interface {
 type CmiDriverClient struct {
 	DriverName           string
 	MachineClientCreator machineClientCreator
-	MachineClass         *v1alpha1.AWSMachineClass
+	MachineClass         *v1alpha1.MachineClass
 	CloudConfig          *corev1.Secret
 	UserData             string
 	MachineID            string
@@ -73,7 +73,7 @@ func NewCmiDriverClient(machineID string, driverName string, secret *corev1.Secr
 	c := &CmiDriverClient{
 		DriverName:           driverName,
 		MachineClientCreator: newMachineClient,
-		MachineClass:         machineClass.(*v1alpha1.AWSMachineClass),
+		MachineClass:         machineClass.(*v1alpha1.MachineClass),
 		CloudConfig:          secret,
 		UserData:             string(secret.Data["userData"]),
 		MachineID:            machineID,

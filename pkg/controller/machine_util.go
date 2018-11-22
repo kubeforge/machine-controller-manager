@@ -227,11 +227,13 @@ func (c *controller) validateMachineClass(classSpec *v1alpha1.ClassSpec) (interf
 
 	} else if classSpec.Kind == "MachineClass" {
 
-		MachineClass, err := c.machineClassLister.MachineClasses(c.namespace).Get(classSpec.Name)
+		CommonMachineClass, err := c.machineClassLister.MachineClasses(c.namespace).Get(classSpec.Name)
 		if err != nil {
-			glog.V(2).Infof("AWSMachineClass %q/%q not found. Skipping. %v", c.namespace, classSpec.Name, err)
+			glog.V(2).Infof("MachineClass %q/%q not found. Skipping. %v", c.namespace, classSpec.Name, err)
 			return MachineClass, secretRef, err
 		}
+
+		MachineClass = CommonMachineClass
 
 		internalMachineClass := &machineapi.MachineClass{}
 		err = c.internalExternalScheme.Convert(MachineClass, internalMachineClass, nil)
@@ -247,7 +249,7 @@ func (c *controller) validateMachineClass(classSpec *v1alpha1.ClassSpec) (interf
 		}
 
 		// Get secretRef
-		secretRef, err = c.getSecret(MachineClass.SecretRef, MachineClass.Name)
+		secretRef, err = c.getSecret(CommonMachineClass.SecretRef, CommonMachineClass.Name)
 		if err != nil || secretRef == nil {
 			glog.V(2).Info("Secret reference not found")
 			return MachineClass, secretRef, err
