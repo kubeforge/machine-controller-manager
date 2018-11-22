@@ -257,6 +257,29 @@ func (c *controller) checkVMObjects() {
 	c.checkAzureMachineClass()
 	c.checkGCPMachineClass()
 	c.checkAlicloudMachineClass()
+	c.checkCommonMachineClass()
+}
+
+// checkMachineClass checks for orphan VMs in MachinesClasses
+func (c *controller) checkCommonMachineClass() {
+	MachineClasses, err := c.machineClassLister.List(labels.Everything())
+	if err != nil {
+		glog.Error("Safety-Net: Error getting machineClasses")
+		return
+	}
+
+	for _, machineClass := range MachineClasses {
+
+		var machineClassInterface interface{}
+		machineClassInterface = machineClass
+
+		c.checkMachineClass(
+			machineClassInterface,
+			machineClass.SecretRef,
+			machineClass.Name,
+			machineClass.Kind,
+		)
+	}
 }
 
 // checkAWSMachineClass checks for orphan VMs in AWSMachinesClasses

@@ -82,6 +82,7 @@ func NewCmiDriverClient(machineID string, driverName string, secret *corev1.Secr
 	return c
 }
 
+// CreateMachine makes a gRPC call to the driver to create the machine.
 func (c *CmiDriverClient) CreateMachine() (string, string, error) {
 	glog.V(2).Info("Calling CreateMachine rpc ........", c)
 
@@ -104,6 +105,7 @@ func (c *CmiDriverClient) CreateMachine() (string, string, error) {
 	return resp.ProviderID, resp.Name, err
 }
 
+// DeleteMachine make a grpc call to the driver to delete the machine.
 func (c *CmiDriverClient) DeleteMachine() error {
 	glog.V(4).Info("Calling DeleteMachine rpc")
 

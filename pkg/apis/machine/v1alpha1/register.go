@@ -67,6 +67,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&AlicloudMachineClass{},
 		&AlicloudMachineClassList{},
 
+		&MachineClass{},
+		&MachineClassList{},
+
 		&Machine{},
 		&MachineList{},
 
