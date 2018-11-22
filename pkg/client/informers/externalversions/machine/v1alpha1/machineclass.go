@@ -15,59 +15,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// MachineInformer provides access to a shared informer and lister for
-// Machines.
-type MachineInformer interface {
+// MachineClassInformer provides access to a shared informer and lister for
+// MachineClasses.
+type MachineClassInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.MachineLister
+	Lister() v1alpha1.MachineClassLister
 }
 
-type machineInformer struct {
+type machineClassInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewMachineInformer constructs a new informer for Machine type.
+// NewMachineClassInformer constructs a new informer for MachineClass type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewMachineInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredMachineInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewMachineClassInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredMachineClassInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredMachineInformer constructs a new informer for Machine type.
+// NewFilteredMachineClassInformer constructs a new informer for MachineClass type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredMachineInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredMachineClassInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MachineV1alpha1().Machines(namespace).List(options)
+				return client.MachineV1alpha1().MachineClasses(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MachineV1alpha1().Machines(namespace).Watch(options)
+				return client.MachineV1alpha1().MachineClasses(namespace).Watch(options)
 			},
 		},
-		&machine_v1alpha1.Machine{},
+		&machine_v1alpha1.MachineClass{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *machineInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredMachineInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *machineClassInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredMachineClassInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *machineInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&machine_v1alpha1.Machine{}, f.defaultInformer)
+func (f *machineClassInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&machine_v1alpha1.MachineClass{}, f.defaultInformer)
 }
 
-func (f *machineInformer) Lister() v1alpha1.MachineLister {
-	return v1alpha1.NewMachineLister(f.Informer().GetIndexer())
+func (f *machineClassInformer) Lister() v1alpha1.MachineClassLister {
+	return v1alpha1.NewMachineClassLister(f.Informer().GetIndexer())
 }
