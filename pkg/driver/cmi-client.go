@@ -101,12 +101,28 @@ func (c *CmiDriverClient) CreateMachine() (string, string, error) {
 	}
 	fmt.Println(resp)
 
-	return resp.ProviderID, resp.Name, nil
+	return resp.ProviderID, resp.Name, err
 }
 
 func (c *CmiDriverClient) DeleteMachine() error {
 	glog.V(4).Info("Calling DeleteMachine rpc")
-	return nil
+
+	machineClient, closer, err := c.MachineClientCreator(c.DriverName)
+	if err != nil {
+		return err
+	}
+	defer closer.Close()
+
+	req := &cmipb.DeleteMachineRequest{
+		Name: c.MachineName,
+	}
+	ctx := context.Background()
+	resp, err := machineClient.DeleteMachine(ctx, req)
+	if err != nil {
+		return err
+	}
+	fmt.Println(resp, err)
+	return err
 }
 
 func (c *CmiDriverClient) ListMachine() ([]string, error) {
@@ -115,7 +131,7 @@ func (c *CmiDriverClient) ListMachine() ([]string, error) {
 }
 
 func (c *CmiDriverClient) GetVMs(machineID string) (map[string]string, error) {
-	glog.V(4).Info("Calling ListMachine rpc")
+	glog.V(4).Info("Calling GetVMSs call")
 	return nil, nil
 }
 

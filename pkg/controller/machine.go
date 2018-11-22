@@ -147,7 +147,7 @@ func (c *controller) reconcileClusterMachine(machine *v1alpha1.Machine) error {
 
 	driver := driver.NewCmiDriverClient("machineID", "driverName", secretRef, MachineClass, "machineName")
 
-	actualProviderID, err := "ActualProviderId", nil
+	actualProviderID, err := "", nil
 	if err != nil {
 		return err
 	} else if actualProviderID == "fake" {
