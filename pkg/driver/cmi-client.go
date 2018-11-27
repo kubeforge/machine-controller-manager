@@ -29,8 +29,6 @@ import (
 
 	"github.com/golang/glog"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type cmiClient interface {
@@ -43,7 +41,7 @@ type CmiDriverClient struct {
 	DriverName           string
 	MachineClientCreator machineClientCreator
 	MachineClass         *v1alpha1.MachineClass
-	CloudConfig          *corev1.Secret
+	Secret               *corev1.Secret
 	UserData             string
 	MachineID            string
 	MachineName          string
@@ -74,7 +72,7 @@ func NewCmiDriverClient(machineID string, driverName string, secret *corev1.Secr
 		DriverName:           driverName,
 		MachineClientCreator: newMachineClient,
 		MachineClass:         machineClass.(*v1alpha1.MachineClass),
-		CloudConfig:          secret,
+		Secret:               secret,
 		UserData:             string(secret.Data["userData"]),
 		MachineID:            machineID,
 		MachineName:          machineName,
@@ -84,7 +82,7 @@ func NewCmiDriverClient(machineID string, driverName string, secret *corev1.Secr
 
 // CreateMachine makes a gRPC call to the driver to create the machine.
 func (c *CmiDriverClient) CreateMachine() (string, string, error) {
-	glog.V(2).Info("Calling CreateMachine rpc ........", c)
+	glog.V(2).Info("Calling CreateMachine rpc", c.MachineName)
 
 	machineClient, closer, err := c.MachineClientCreator(c.DriverName)
 	if err != nil {
@@ -93,21 +91,24 @@ func (c *CmiDriverClient) CreateMachine() (string, string, error) {
 	defer closer.Close()
 
 	req := &cmipb.CreateMachineRequest{
-		Providerconfig: "MachineClass.ProviderConfig here",
+		ProviderSpec: c.MachineClass.ProviderSpec.Raw,
+		Name:         c.MachineName,
+		Secrets:      c.Secret.Data,
 	}
 	ctx := context.Background()
 	resp, err := machineClient.CreateMachine(ctx, req)
 	if err != nil {
+		glog.Error("CreateMachine rpc failed with", err)
 		return "", "", err
 	}
-	fmt.Println(resp)
+	glog.V(2).Info("Machine Successfully Created, MachineID:", resp.ProviderID)
 
 	return resp.ProviderID, resp.Name, err
 }
 
 // DeleteMachine make a grpc call to the driver to delete the machine.
 func (c *CmiDriverClient) DeleteMachine() error {
-	glog.V(4).Info("Calling DeleteMachine rpc")
+	glog.V(4).Info("Calling DeleteMachine rpc", c.MachineName)
 
 	machineClient, closer, err := c.MachineClientCreator(c.DriverName)
 	if err != nil {
@@ -116,29 +117,52 @@ func (c *CmiDriverClient) DeleteMachine() error {
 	defer closer.Close()
 
 	req := &cmipb.DeleteMachineRequest{
-		Name: c.MachineName,
+		MachineID: c.MachineID,
+		Secrets:   c.Secret.Data,
 	}
 	ctx := context.Background()
 	resp, err := machineClient.DeleteMachine(ctx, req)
-	if err != nil {
+	if err != nil || resp.Error != "" {
+		glog.Error("Delete machine rpc failed")
 		return err
 	}
-	fmt.Println(resp, err)
+
+	glog.V(2).Info("Machine deletion is initiated successfully. MachineID", c.MachineID)
 	return err
 }
 
-func (c *CmiDriverClient) ListMachine() ([]string, error) {
-	glog.V(4).Info("Calling ListMachine rpc")
-	return nil, status.Error(codes.Unimplemented, "")
+func (c *CmiDriverClient) ListMachines(machienID string) (map[string]string, error) {
+	glog.V(2).Info("Calling ListMachine rpc")
+
+	machineClient, closer, err := c.MachineClientCreator(c.DriverName)
+	if err != nil {
+		return nil, err
+	}
+	defer closer.Close()
+
+	req := &cmipb.ListMachinesRequest{
+		MachineID:    c.MachineID,
+		Secrets:      c.Secret.Data,
+		ProviderSpec: c.MachineClass.ProviderSpec.Raw,
+	}
+	ctx := context.Background()
+
+	resp, err := machineClient.ListMachines(ctx, req)
+	if err != nil || resp.Error != "" {
+		glog.Error("Delete machine rpc failed", err, resp.Error)
+		return nil, err
+	}
+
+	return resp.MachineList, err
 }
 
 func (c *CmiDriverClient) GetVMs(machineID string) (map[string]string, error) {
-	glog.V(4).Info("Calling GetVMSs call")
-	return nil, nil
+	glog.V(4).Info("Calling GetVMs rpc")
+	return c.ListMachines(machineID)
 }
 
 func (c *CmiDriverClient) GetExisting() (string, error) {
-	glog.V(4).Info("Calling GetExisting  rpc")
+	glog.V(4).Info("Calling GetExisting rpc")
 	return c.MachineID, nil
 }
 
