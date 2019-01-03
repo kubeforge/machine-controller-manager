@@ -147,7 +147,7 @@ func (c *controller) reconcileClusterMachine(machine *v1alpha1.Machine) error {
 	// TODO: Make cloud-provider configurable via machine.spec.provider or machineclass.provider
 	driver := driver.NewCmiDriverClient(machine.Spec.ProviderID, "AWS", secretRef, MachineClass, machine.Name)
 
-	actualProviderID, err := "", nil
+	actualProviderID, err := machine.Spec.ProviderID, nil
 	if err != nil {
 		return err
 	} else if actualProviderID == "fake" {

@@ -103,7 +103,7 @@ func (c *CmiDriverClient) CreateMachine() (string, string, error) {
 	}
 	glog.V(2).Info("Machine Successfully Created, MachineID:", resp.MachineID)
 
-	return resp.MachineID, resp.Name, err
+	return resp.MachineID, resp.NodeName, err
 }
 
 // DeleteMachine make a grpc call to the driver to delete the machine.
@@ -132,7 +132,7 @@ func (c *CmiDriverClient) DeleteMachine() error {
 	return err
 }
 
-func (c *CmiDriverClient) ListMachines(machienID string) (map[string]string, error) {
+func (c *CmiDriverClient) ListMachines(MachineID string) (map[string]string, error) {
 	glog.V(2).Info("Calling ListMachine rpc")
 
 	machineClient, closer, err := c.MachineClientCreator(c.DriverName)
@@ -142,7 +142,7 @@ func (c *CmiDriverClient) ListMachines(machienID string) (map[string]string, err
 	defer closer.Close()
 
 	req := &cmipb.ListMachinesRequest{
-		MachineID:    c.MachineID,
+		MachineID:    MachineID,
 		Secrets:      c.Secret.Data,
 		ProviderSpec: c.MachineClass.ProviderSpec.Raw,
 	}
@@ -150,7 +150,7 @@ func (c *CmiDriverClient) ListMachines(machienID string) (map[string]string, err
 
 	resp, err := machineClient.ListMachines(ctx, req)
 	if err != nil {
-		glog.Error("Delete machine rpc failed", err, resp)
+		glog.Error("List machine rpc failed", err, resp)
 		return nil, err
 	}
 
