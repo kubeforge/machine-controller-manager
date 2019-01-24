@@ -74,6 +74,7 @@ func NewController(
 	gcpMachineClassInformer machineinformers.GCPMachineClassInformer,
 	alicloudMachineClassInformer machineinformers.AlicloudMachineClassInformer,
 	packetMachineClassInformer machineinformers.PacketMachineClassInformer,
+	kubeVirtMachineClassInformer machineinformers.KubeVirtMachineClassInformer,
 	machineInformer machineinformers.MachineInformer,
 	machineSetInformer machineinformers.MachineSetInformer,
 	machineDeploymentInformer machineinformers.MachineDeploymentInformer,
@@ -95,6 +96,7 @@ func NewController(
 		gcpMachineClassQueue:           workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "gcpmachineclass"),
 		alicloudMachineClassQueue:      workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "alicloudmachineclass"),
 		packetMachineClassQueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "packetmachineclass"),
+		kubeVirtMachineClassQueue:      workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "kubevirtmachineclass"),
 		machineQueue:                   workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
 		machineSetQueue:                workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machineset"),
 		machineDeploymentQueue:         workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machinedeployment"),
@@ -136,6 +138,7 @@ func NewController(
 	controller.gcpMachineClassLister = gcpMachineClassInformer.Lister()
 	controller.alicloudMachineClassLister = alicloudMachineClassInformer.Lister()
 	controller.packetMachineClassLister = packetMachineClassInformer.Lister()
+	controller.kubeVirtMachineClassLister = kubeVirtMachineClassInformer.Lister()
 	controller.nodeLister = nodeInformer.Lister()
 	controller.machineLister = machineInformer.Lister()
 	controller.machineSetLister = machineSetInformer.Lister()
@@ -149,6 +152,7 @@ func NewController(
 	controller.gcpMachineClassSynced = gcpMachineClassInformer.Informer().HasSynced
 	controller.alicloudMachineClassSynced = alicloudMachineClassInformer.Informer().HasSynced
 	controller.packetMachineClassSynced = packetMachineClassInformer.Informer().HasSynced
+	controller.kubeVirtMachineClassSynced = kubeVirtMachineClassInformer.Informer().HasSynced
 	controller.nodeSynced = nodeInformer.Informer().HasSynced
 	controller.machineSynced = machineInformer.Informer().HasSynced
 	controller.machineSetSynced = machineSetInformer.Informer().HasSynced
@@ -298,6 +302,11 @@ func NewController(
 		UpdateFunc: controller.packetMachineClassUpdate,
 	})
 
+	kubeVirtMachineClassInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    controller.kubeVirtMachineClassAdd,
+		UpdateFunc: controller.kubeVirtMachineClassUpdate,
+	})
+
 	/* Node Controller Informers - Don't remove this, saved for future use case.
 	nodeInformer.Informer().AddEventHandler(
 		cache.FilteringResourceEventHandler{
@@ -412,6 +421,7 @@ type controller struct {
 	gcpMachineClassLister       machinelisters.GCPMachineClassLister
 	alicloudMachineClassLister  machinelisters.AlicloudMachineClassLister
 	packetMachineClassLister    machinelisters.PacketMachineClassLister
+	kubeVirtMachineClassLister  machinelisters.KubeVirtMachineClassLister
 	machineLister               machinelisters.MachineLister
 	machineSetLister            machinelisters.MachineSetLister
 	machineDeploymentLister     machinelisters.MachineDeploymentLister
@@ -424,6 +434,7 @@ type controller struct {
 	gcpMachineClassQueue           workqueue.RateLimitingInterface
 	alicloudMachineClassQueue      workqueue.RateLimitingInterface
 	packetMachineClassQueue        workqueue.RateLimitingInterface
+	kubeVirtMachineClassQueue      workqueue.RateLimitingInterface
 	machineQueue                   workqueue.RateLimitingInterface
 	machineSetQueue                workqueue.RateLimitingInterface
 	machineDeploymentQueue         workqueue.RateLimitingInterface
@@ -439,6 +450,7 @@ type controller struct {
 	gcpMachineClassSynced       cache.InformerSynced
 	alicloudMachineClassSynced  cache.InformerSynced
 	packetMachineClassSynced    cache.InformerSynced
+	kubeVirtMachineClassSynced  cache.InformerSynced
 	machineSynced               cache.InformerSynced
 	machineSetSynced            cache.InformerSynced
 	machineDeploymentSynced     cache.InformerSynced
@@ -459,6 +471,7 @@ func (c *controller) Run(workers int, stopCh <-chan struct{}) {
 	defer c.gcpMachineClassQueue.ShutDown()
 	defer c.alicloudMachineClassQueue.ShutDown()
 	defer c.packetMachineClassQueue.ShutDown()
+	defer c.kubeVirtMachineClassQueue.ShutDown()
 	defer c.machineQueue.ShutDown()
 	defer c.machineSetQueue.ShutDown()
 	defer c.machineDeploymentQueue.ShutDown()
@@ -487,6 +500,7 @@ func (c *controller) Run(workers int, stopCh <-chan struct{}) {
 		createWorker(c.gcpMachineClassQueue, "ClusterGCPMachineClass", maxRetries, true, c.reconcileClusterGCPMachineClassKey, stopCh, &waitGroup)
 		createWorker(c.alicloudMachineClassQueue, "ClusterAlicloudMachineClass", maxRetries, true, c.reconcileClusterAlicloudMachineClassKey, stopCh, &waitGroup)
 		createWorker(c.packetMachineClassQueue, "ClusterPacketMachineClass", maxRetries, true, c.reconcileClusterPacketMachineClassKey, stopCh, &waitGroup)
+		createWorker(c.kubeVirtMachineClassQueue, "ClusterKubeVirtMachineClass", maxRetries, true, c.reconcileClusterKubeVirtMachineClassKey, stopCh, &waitGroup)
 		createWorker(c.secretQueue, "ClusterSecret", maxRetries, true, c.reconcileClusterSecretKey, stopCh, &waitGroup)
 		createWorker(c.nodeQueue, "ClusterNode", maxRetries, true, c.reconcileClusterNodeKey, stopCh, &waitGroup)
 		createWorker(c.machineQueue, "ClusterMachine", maxRetries, true, c.reconcileClusterMachineKey, stopCh, &waitGroup)
