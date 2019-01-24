@@ -1228,3 +1228,44 @@ type PacketSSHKeySpec struct {
 	ID          string
 	Fingerprint string
 }
+
+/********************** KubeVirtMachineClass APIs ***************/
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// KubeVirtMachineClass TODO
+type KubeVirtMachineClass struct {
+	// +optional
+	metav1.ObjectMeta
+
+	// +optional
+	metav1.TypeMeta
+
+	// +optional
+	Spec KubeVirtMachineClassSpec
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// KubeVirtMachineClassList is a collection of KubeVirtMachineClasses.
+type KubeVirtMachineClassList struct {
+	// +optional
+	metav1.TypeMeta
+
+	// +optional
+	metav1.ListMeta
+
+	// +optional
+	Items []KubeVirtMachineClass
+}
+
+// KubeVirtMachineClassSpec is the specification of a cluster.
+type KubeVirtMachineClassSpec struct {
+	ImageName      string
+	Tags           map[string]string
+	SecretRef      *corev1.SecretReference
+	PodNetworkCidr string
+	Memory         string
+	Cores          string
+}
