@@ -10,6 +10,8 @@ type AzureMachineClassExpansion interface{}
 
 type GCPMachineClassExpansion interface{}
 
+type KubeVirtMachineClassExpansion interface{}
+
 type MachineExpansion interface{}
 
 type MachineDeploymentExpansion interface{}

@@ -45,6 +45,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Machine().InternalVersion().AzureMachineClasses().Informer()}, nil
 	case machine.SchemeGroupVersion.WithResource("gcpmachineclasses"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Machine().InternalVersion().GCPMachineClasses().Informer()}, nil
+	case machine.SchemeGroupVersion.WithResource("kubevirtmachineclasses"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Machine().InternalVersion().KubeVirtMachineClasses().Informer()}, nil
 	case machine.SchemeGroupVersion.WithResource("machines"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Machine().InternalVersion().Machines().Informer()}, nil
 	case machine.SchemeGroupVersion.WithResource("machinedeployments"):
