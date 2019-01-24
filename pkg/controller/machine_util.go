@@ -244,6 +244,35 @@ func (c *controller) validateMachineClass(classSpec *v1alpha1.ClassSpec) (interf
 			glog.V(2).Info("Secret reference not found")
 			return MachineClass, secretRef, err
 		}
+	case "KubeVirtMachineClass":
+
+		KubeVirtMachineClass, err := c.kubeVirtMachineClassLister.KubeVirtMachineClasses(c.namespace).Get(classSpec.Name)
+		if err != nil {
+			glog.V(2).Infof("KubeVirtMachineClass %q not found. Skipping. %v", classSpec.Name, err)
+			return MachineClass, secretRef, err
+		}
+		MachineClass = KubeVirtMachineClass
+
+		// Validate KubeVirtMachineClass
+		internalKubeVirtMachineClass := &machineapi.KubeVirtMachineClass{}
+		err = c.internalExternalScheme.Convert(KubeVirtMachineClass, internalKubeVirtMachineClass, nil)
+		if err != nil {
+			glog.V(2).Info("Error in scheme conversion")
+			return MachineClass, secretRef, err
+		}
+
+		validationerr := validation.ValidateKubeVirtMachineClass(internalKubeVirtMachineClass)
+		if validationerr.ToAggregate() != nil && len(validationerr.ToAggregate().Errors()) > 0 {
+			glog.V(2).Infof("Validation of KubeVirtMachineClass failed %s", validationerr.ToAggregate().Error())
+			return MachineClass, secretRef, nil
+		}
+
+		// Get secretRef
+		secretRef, err = c.getSecret(KubeVirtMachineClass.Spec.SecretRef, KubeVirtMachineClass.Name)
+		if err != nil || secretRef == nil {
+			glog.V(2).Info("Secret reference not found")
+			return MachineClass, secretRef, err
+		}
 	default:
 		glog.V(2).Infof("ClassKind %q not found", classSpec.Kind)
 	}
