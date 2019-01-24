@@ -15,6 +15,7 @@ type MachineV1alpha1Interface interface {
 	AlicloudMachineClassesGetter
 	AzureMachineClassesGetter
 	GCPMachineClassesGetter
+	KubeVirtMachineClassesGetter
 	MachinesGetter
 	MachineDeploymentsGetter
 	MachineSetsGetter
@@ -43,6 +44,10 @@ func (c *MachineV1alpha1Client) AzureMachineClasses(namespace string) AzureMachi
 
 func (c *MachineV1alpha1Client) GCPMachineClasses(namespace string) GCPMachineClassInterface {
 	return newGCPMachineClasses(c, namespace)
+}
+
+func (c *MachineV1alpha1Client) KubeVirtMachineClasses(namespace string) KubeVirtMachineClassInterface {
+	return newKubeVirtMachineClasses(c, namespace)
 }
 
 func (c *MachineV1alpha1Client) Machines(namespace string) MachineInterface {

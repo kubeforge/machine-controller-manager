@@ -34,6 +34,14 @@ type GCPMachineClassListerExpansion interface{}
 // GCPMachineClassNamespaceLister.
 type GCPMachineClassNamespaceListerExpansion interface{}
 
+// KubeVirtMachineClassListerExpansion allows custom methods to be added to
+// KubeVirtMachineClassLister.
+type KubeVirtMachineClassListerExpansion interface{}
+
+// KubeVirtMachineClassNamespaceListerExpansion allows custom methods to be added to
+// KubeVirtMachineClassNamespaceLister.
+type KubeVirtMachineClassNamespaceListerExpansion interface{}
+
 // MachineListerExpansion allows custom methods to be added to
 // MachineLister.
 type MachineListerExpansion interface{}

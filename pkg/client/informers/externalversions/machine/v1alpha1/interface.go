@@ -16,6 +16,8 @@ type Interface interface {
 	AzureMachineClasses() AzureMachineClassInformer
 	// GCPMachineClasses returns a GCPMachineClassInformer.
 	GCPMachineClasses() GCPMachineClassInformer
+	// KubeVirtMachineClasses returns a KubeVirtMachineClassInformer.
+	KubeVirtMachineClasses() KubeVirtMachineClassInformer
 	// Machines returns a MachineInformer.
 	Machines() MachineInformer
 	// MachineDeployments returns a MachineDeploymentInformer.
@@ -59,6 +61,11 @@ func (v *version) AzureMachineClasses() AzureMachineClassInformer {
 // GCPMachineClasses returns a GCPMachineClassInformer.
 func (v *version) GCPMachineClasses() GCPMachineClassInformer {
 	return &gCPMachineClassInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// KubeVirtMachineClasses returns a KubeVirtMachineClassInformer.
+func (v *version) KubeVirtMachineClasses() KubeVirtMachineClassInformer {
+	return &kubeVirtMachineClassInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // Machines returns a MachineInformer.

@@ -70,6 +70,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PacketMachineClass{},
 		&PacketMachineClassList{},
 
+		&KubeVirtMachineClass{},
+		&KubeVirtMachineClassList{},
+
 		&Machine{},
 		&MachineList{},
 

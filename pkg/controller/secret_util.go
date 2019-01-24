@@ -162,3 +162,19 @@ func (c *controller) findPacketMachineClassForSecret(name string) ([]*v1alpha1.P
 	}
 	return filtered, nil
 }
+
+// findKubeVirtMachineClassForSecret returns the set of
+// kubeVirtMachineClasses referring to the passed secret
+func (c *controller) findKubeVirtMachineClassForSecret(name string) ([]*v1alpha1.KubeVirtMachineClass, error) {
+	machineClasses, err := c.kubeVirtMachineClassLister.List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+	var filtered []*v1alpha1.KubeVirtMachineClass
+	for _, machineClass := range machineClasses {
+		if machineClass.Spec.SecretRef.Name == name {
+			filtered = append(filtered, machineClass)
+		}
+	}
+	return filtered, nil
+}

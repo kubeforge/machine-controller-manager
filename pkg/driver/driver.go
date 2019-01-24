@@ -84,6 +84,7 @@ func NewDriver(machineID string, secretRef *corev1.Secret, classKind string, mac
 			MachineID:            machineID,
 			MachineName:          machineName,
 		}
+
 	case "PacketMachineClass":
 		return &PacketDriver{
 			PacketMachineClass: machineClass.(*v1alpha1.PacketMachineClass),
@@ -91,6 +92,15 @@ func NewDriver(machineID string, secretRef *corev1.Secret, classKind string, mac
 			UserData:           string(secretRef.Data["userData"]),
 			MachineID:          machineID,
 			MachineName:        machineName,
+		}
+
+	case "KubeVirtMachineClass":
+		return &KubeVirtDriver{
+			KubeVirtMachineClass: machineClass.(*v1alpha1.KubeVirtMachineClass),
+			CloudConfig:          secretRef,
+			UserData:             string(secretRef.Data["userData"]),
+			MachineID:            machineID,
+			MachineName:          machineName,
 		}
 	}
 

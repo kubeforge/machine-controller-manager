@@ -1234,3 +1234,78 @@ type PacketMachineClassSpec struct {
 
 	// TODO add more here
 }
+
+/********************** KubeVirtMachineClass APIs ***************/
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// KubeVirtMachineClass TODO
+type KubeVirtMachineClass struct {
+	// +optional
+	metav1.ObjectMeta
+
+	// +optional
+	metav1.TypeMeta
+
+	// +optional
+	Spec KubeVirtMachineClassSpec
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// KubeVirtMachineClassList is a collection of KubeVirtMachineClasses.
+type KubeVirtMachineClassList struct {
+	// +optional
+	metav1.TypeMeta
+
+	// +optional
+	metav1.ListMeta
+
+	// +optional
+	Items []KubeVirtMachineClass
+}
+
+// KubeVirtMachineClassSpec is the specification of a cluster.
+type KubeVirtMachineClassSpec struct {
+	ImageName      string
+	Tags           map[string]string
+	SecretRef      *corev1.SecretReference
+	PodNetworkCidr string
+	Memory         string
+	Cores          string
+	Disks          []*KubeVirtDisk
+	Networks       []*KubeVirtNetworkInterface
+}
+
+// KubeVirtDisk describes a disk to mount to a KubeVirt VM
+type KubeVirtDisk struct {
+	Name string
+
+	// The type of the disk.
+	// See https://kubevirt.io/api-reference/master/definitions.html#_v1_volume
+	// for a list of all KubeVirt volume types that can be used as a disk.
+	// Supported types: configMap, dataVolume, persistentVolumeClaim, secret, serviceAccount
+	Type string
+
+	// The reference to the volume. Depends on the type what it actually
+	// references. E.g. for type configMap a configmap name is expected as reference.
+	VolumeRef string
+
+	// The serial of the disk in the VM. The disk will be located in the VM at
+	// /dev/disk/by-id/ata-QEMU_HARDDISK_<serial>.
+	Serial string
+}
+
+// KubeVirtNetworkInterface describes a network interface for a KubeVirt VM
+type KubeVirtNetworkInterface struct {
+	NetworkName string
+
+	// The type of the network.
+	// See https://kubevirt.io/api-reference/master/definitions.html#_v1_network
+	// for a list of all KubeVirt network types.
+	NetworkType string
+
+	// Reference to a NetworkAttachmentDefinition CRD object
+	NetworkRef string
+}

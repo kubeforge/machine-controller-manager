@@ -1174,6 +1174,8 @@ const (
 
 	// PacketAPIKey is a constant for a key name that is part of the Packet cloud credentials
 	PacketAPIKey string = "apiToken"
+
+	KubeVirtKubeConfig string = "kubeconfig"
 )
 
 /********************** AlicloudMachineClass APIs ***************/
@@ -1267,14 +1269,74 @@ type PacketMachineClassList struct {
 
 // PacketMachineClassSpec is the specification of a cluster.
 type PacketMachineClassSpec struct {
-	Facility     []string           `json:"facility"`
-	MachineType  string             `json:"machineType"`
-	BillingCycle string             `json:"billingCycle"`
-	OS           string             `json:"OS"`
-	ProjectID    string             `json:"projectID"`
-	Tags         []string  `json:"tags,omitempty"`
+	Facility     []string `json:"facility"`
+	MachineType  string   `json:"machineType"`
+	BillingCycle string   `json:"billingCycle"`
+	OS           string   `json:"OS"`
+	ProjectID    string   `json:"projectID"`
+	Tags         []string `json:"tags,omitempty"`
 	SSHKeys      []string `json:"sshKeys,omitempty"`
-	UserData     string             `json:"userdata,omitempty"`
+	UserData     string   `json:"userdata,omitempty"`
 
 	SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
+}
+
+/********************** KubeVirtMachineClass APIs ***************/
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// KubeVirtMachineClass TODO
+type KubeVirtMachineClass struct {
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// +optional
+	metav1.TypeMeta `json:",inline"`
+
+	// +optional
+	Spec KubeVirtMachineClassSpec `json:"spec,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// KubeVirtMachineClassList is a collection of KubeVirtMachineClasses.
+type KubeVirtMachineClassList struct {
+	// +optional
+	metav1.TypeMeta `json:",inline"`
+
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +optional
+	Items []KubeVirtMachineClass `json:"items"`
+}
+
+// KubeVirtMachineClassSpec is the specification of a cluster.
+type KubeVirtMachineClassSpec struct {
+	ImageName      string                      `json:"imageName"`
+	Memory         string                      `json:"memory"`
+	Cores          string                      `json:"cores"`
+	Tags           map[string]string           `json:"tags,omitempty"`
+	SecretRef      *corev1.SecretReference     `json:"secretRef,omitempty"`
+	PodNetworkCidr string                      `json:"podNetworkCidr"`
+	Disks          []*KubeVirtDisk             `json:"disks,omitempty"`
+	Networks       []*KubeVirtNetworkInterface `json:"networks,omitempty"`
+	//Region           string                  `json:"region"`
+	//AvailabilityZone string                  `json:"availabilityZone"`
+}
+
+// KubeVirtDisk describes a disk to mount to a KubeVirt VM
+type KubeVirtDisk struct {
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	VolumeRef string `json:"volumeRef"`
+	Serial    string `json:"serial,omitempty"`
+}
+
+// KubeVirtNetworkInterface describes a network interface for a KubeVirt VM
+type KubeVirtNetworkInterface struct {
+	NetworkName string `json:"networkName,omitempty"`
+	NetworkType string `json:"networkType,omitempty"`
+	NetworkRef  string `json:"networkRef,omitempty"`
 }
