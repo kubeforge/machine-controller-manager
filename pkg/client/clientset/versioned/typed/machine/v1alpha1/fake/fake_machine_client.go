@@ -28,6 +28,10 @@ func (c *FakeMachineV1alpha1) GCPMachineClasses(namespace string) v1alpha1.GCPMa
 	return &FakeGCPMachineClasses{c, namespace}
 }
 
+func (c *FakeMachineV1alpha1) KubeVirtMachineClasses(namespace string) v1alpha1.KubeVirtMachineClassInterface {
+	return &FakeKubeVirtMachineClasses{c, namespace}
+}
+
 func (c *FakeMachineV1alpha1) Machines(namespace string) v1alpha1.MachineInterface {
 	return &FakeMachines{c, namespace}
 }
