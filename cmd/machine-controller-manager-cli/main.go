@@ -91,6 +91,11 @@ func main() {
 		machineclass = &class
 		classKind = "PacketMachineClass"
 
+	case "KubeVirtMachineClass", "kubevirt":
+		class := v1alpha1.KubeVirtMachineClass{}
+		machineclass = &class
+		classKind = "KubeVirtMachineClass"
+
 	default:
 		log.Fatalf("Unknown class kind %s", classKind)
 	}
