@@ -24,23 +24,23 @@ required = [
   name = "github.com/spf13/pflag"
   version = "v1.0.0"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/api"
   version = "kubernetes-1.12.1"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/apimachinery"
   version = "kubernetes-1.12.1"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/apiserver"
   version = "kubernetes-1.12.1"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/client-go"
   version = "kubernetes-1.12.1"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/code-generator"
   version = "kubernetes-1.12.1"
 
@@ -48,7 +48,7 @@ required = [
 #   name = "k8s.io/gengo"
 #   revision = "8394c995ab8fbe52216f38d0e1a37de36d820528"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/kube-openapi"
   revision = "50ae88d24ede7b8bad68e23c805b5d3da5c8abaf"
 
@@ -77,3 +77,13 @@ required = [
 [[constraint]]
   name = "github.com/aliyun/alibaba-cloud-sdk-go"
   version = "1.27.7"
+
+[[constraint]]
+  name = "kubevirt.io/kubevirt"
+  #version = "v0.11.0"
+  branch = "kubernetes-1.12"
+  source = "github.com/kubeforge/kubevirt"
+
+[[constraint]]
+  name = "kubevirt.io/containerized-data-importer"
+  version = "v1.4.1"

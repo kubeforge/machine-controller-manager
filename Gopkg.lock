@@ -246,6 +246,14 @@
   revision = "24b0969c4cb722950103eed87108c8d291a8df00"
 
 [[projects]]
+  digest = "1:b60efdeb75d3c0ceed88783ac2495256aba3491a537d0f31401202579fd62a94"
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  pruneopts = "NUT"
+  revision = "51421b967af1f557f93a59e0057aaf15ca02e29c"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:03e14cff610a8a58b774e36bd337fa979482be86aab01be81fb8bbd6d0f07fc8"
   name = "github.com/golang/protobuf"
   packages = [
@@ -274,6 +282,14 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "24818f796faf91cd76ec7bddd72458fbced7a6c1"
+
+[[projects]]
+  digest = "1:56a1f3949ebb7fa22fa6b4e4ac0fe0f77cc4faee5b57413e6fa9199a8458faf1"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "9b3b1e0f5f99ae461456d768e7d301a7acdaa2d8"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:06a7dadb7b760767341ffb6c8d377238d68a1226f2b21b5d497d2e3f6ecf6b4e"
@@ -306,6 +322,14 @@
   ]
   pruneopts = "NUT"
   revision = "fe85f9519740a5b5c09ecb0909609b58e59e5dec"
+
+[[projects]]
+  digest = "1:4a0c072e44da763409da72d41492373a034baf2e6d849c76d239b4abdfbb6c49"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
 
 [[projects]]
   branch = "master"
@@ -345,12 +369,26 @@
   revision = "0b12d6b5"
 
 [[projects]]
-  digest = "1:8e36686e8b139f8fe240c1d5cf3a145bc675c22ff8e707857cdd3ae17b00d728"
+  digest = "0:"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = "NUT"
   revision = ""
   version = "1.1.5"
+
+[[projects]]
+  branch = "master"
+  digest = "1:aa040b1797c4969a899c1e85e77b3176637060b9929b512d9013a9b469dc88d3"
+  name = "github.com/k8snetworkplumbingwg/network-attachment-definition-client"
+  packages = [
+    "pkg/apis/k8s.cni.cncf.io",
+    "pkg/apis/k8s.cni.cncf.io/v1",
+    "pkg/client/clientset/versioned",
+    "pkg/client/clientset/versioned/scheme",
+    "pkg/client/clientset/versioned/typed/k8s.cni.cncf.io/v1",
+  ]
+  pruneopts = "NUT"
+  revision = "386d141f4c94392047e2361a44ad1573a577e666"
 
 [[projects]]
   digest = "1:4059c14e87a2de3a434430340521b5feece186c1469eff0834c29a63870de3ed"
@@ -446,11 +484,38 @@
   version = "v1.4.0"
 
 [[projects]]
+  digest = "1:c49432a1751491b409d5053f66e4e01a9212d7d26c7db5f82d61dccc5f4700fa"
+  name = "github.com/openshift/api"
+  packages = ["security/v1"]
+  pruneopts = "NUT"
+  revision = "0d921e363e951d89f583292c60d013c318df64dc"
+  version = "v3.9.0"
+
+[[projects]]
+  digest = "1:5379fd636367542abf1db1f9d982fc149f6bd81ae32971477a9f4725d532db4b"
+  name = "github.com/openshift/client-go"
+  packages = [
+    "security/clientset/versioned/scheme",
+    "security/clientset/versioned/typed/security/v1",
+  ]
+  pruneopts = "NUT"
+  revision = "1fa528d3be060e4c7178eb69e76d37cf7e699e3c"
+  version = "v3.9.0"
+
+[[projects]]
   digest = "1:7e51c2cdc74f83e13b2b12c99f246b88eb5eae0a77af0c5ceff48f40a31545a5"
   name = "github.com/packethost/packngo"
   packages = ["."]
   pruneopts = "NUT"
   revision = "b3b45f1b4979af3ace1cd5450768ab387b40ae5b"
+
+[[projects]]
+  digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
+  name = "github.com/pborman/uuid"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
+  version = "v1.2"
 
 [[projects]]
   branch = "master"
@@ -718,6 +783,20 @@
   pruneopts = "NUT"
   revision = "357ec6384fa7e10d6ea160d2299a98ddfdc3ab3c"
   version = "kubernetes-1.12.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:501a73762f1b2c4530206ffb657b39d8b58a9b40280d30e4509ae1232767962c"
+  name = "k8s.io/apiextensions-apiserver"
+  packages = [
+    "pkg/apis/apiextensions",
+    "pkg/apis/apiextensions/v1beta1",
+    "pkg/client/clientset/clientset",
+    "pkg/client/clientset/clientset/scheme",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1beta1",
+  ]
+  pruneopts = "NUT"
+  revision = "cf30b7cf64c2979f27127ba17706f30a3489337c"
 
 [[projects]]
   digest = "1:7cb0aece31813c564f41f615a4b295a9abf19c10a491e0b97db9d3f4e0f1ce92"
@@ -1023,6 +1102,38 @@
   pruneopts = "NUT"
   revision = "50ae88d24ede7b8bad68e23c805b5d3da5c8abaf"
 
+[[projects]]
+  digest = "1:84c63d6c2bf9b72359113df598919c6e1b96e461d13f9f268ccee9cb272a7f9c"
+  name = "kubevirt.io/containerized-data-importer"
+  packages = [
+    "pkg/apis/datavolumecontroller",
+    "pkg/apis/datavolumecontroller/v1alpha1",
+    "pkg/apis/uploadcontroller",
+    "pkg/apis/uploadcontroller/v1alpha1",
+    "pkg/client/clientset/versioned",
+    "pkg/client/clientset/versioned/scheme",
+    "pkg/client/clientset/versioned/typed/datavolumecontroller/v1alpha1",
+    "pkg/client/clientset/versioned/typed/uploadcontroller/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "211c0a0a2c164dcca88ffa74242b7e5ec4cdf2a5"
+  version = "v1.4.1"
+
+[[projects]]
+  branch = "kubernetes-1.12"
+  digest = "1:df9344196d37371865ea27e1c95a28e5cd040d24b7da4b0a9fa2ff6fe0198dd3"
+  name = "kubevirt.io/kubevirt"
+  packages = [
+    "pkg/api/v1",
+    "pkg/kubecli",
+    "pkg/precond",
+    "pkg/util/subresources",
+    "pkg/version",
+  ]
+  pruneopts = "NUT"
+  revision = "2b1ccc3eac3fb3841ac82557c2844f2eee1ce580"
+  source = "github.com/kubeforge/kubevirt"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -1108,6 +1219,7 @@
     "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
+    "k8s.io/client-go/tools/clientcmd/api",
     "k8s.io/client-go/tools/leaderelection",
     "k8s.io/client-go/tools/leaderelection/resourcelock",
     "k8s.io/client-go/tools/metrics",
@@ -1124,6 +1236,8 @@
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/code-generator/cmd/openapi-gen",
     "k8s.io/kube-openapi/pkg/common",
+    "kubevirt.io/kubevirt/pkg/api/v1",
+    "kubevirt.io/kubevirt/pkg/kubecli",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
