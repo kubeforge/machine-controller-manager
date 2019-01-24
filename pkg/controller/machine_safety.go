@@ -392,6 +392,28 @@ func (c *controller) checkPacketMachineClass() {
 	}
 }
 
+// checkKubeVirtMachineClass checks for orphan VMs in KubeVirtMachinesClasses
+func (c *controller) checkKubeVirtMachineClass() {
+	KubeVirtMachineClasses, err := c.kubeVirtMachineClassLister.List(labels.Everything())
+	if err != nil {
+		glog.Error("Safety-Net: Error getting machineClasses")
+		return
+	}
+
+	for _, machineClass := range KubeVirtMachineClasses {
+
+		var machineClassInterface interface{}
+		machineClassInterface = machineClass
+
+		c.checkMachineClass(
+			machineClassInterface,
+			machineClass.Spec.SecretRef,
+			machineClass.Name,
+			machineClass.Kind,
+		)
+	}
+}
+
 // checkMachineClass checks a particular machineClass for orphan instances
 func (c *controller) checkMachineClass(
 	machineClass interface{},
