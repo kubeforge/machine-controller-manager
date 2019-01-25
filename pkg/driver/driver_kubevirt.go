@@ -34,8 +34,16 @@ import (
 )
 
 const (
-	containerDiskName = "containerdisk"
-	cloudInitDiskName = "cloudinitdisk"
+	containerDiskName        = "containerdisk"
+	cloudInitDiskName        = "cloudinitdisk"
+	networkTypeGenie         = "genie"
+	networkTypeMultus        = "multus"
+	networkTypePod           = "pod"
+	volumeTypeConfigMap      = "configMap"
+	volumeTypeDataVolume     = "dataVolume"
+	volumeTypePVC            = "persistentVolumeClaim"
+	volumeTypeSecret         = "secret"
+	volumeTypeServiceAccount = "serviceAccount"
 )
 
 // KubeVirtDriver is the driver struct for holding KubeVirt machine information
@@ -69,6 +77,8 @@ func (d *KubeVirtDriver) Create() (string, string, error) {
 		return "", "", fmt.Errorf("Failed to parse cpu cores for machine: %v", err)
 	}
 	image := d.KubeVirtMachineClass.Spec.ImageName
+	disks := d.KubeVirtMachineClass.Spec.Disks
+	networks := d.KubeVirtMachineClass.Spec.Networks
 
 	instance := &kubevirtv1.VirtualMachineInstance{
 		ObjectMeta: metav1.ObjectMeta{
@@ -93,8 +103,10 @@ func (d *KubeVirtDriver) Create() (string, string, error) {
 							Name: containerDiskName,
 						},
 					},
+					Interfaces: []kubevirtv1.Interface{},
 				},
 			},
+			Networks: []kubevirtv1.Network{},
 			Volumes: []kubevirtv1.Volume{
 				kubevirtv1.Volume{
 					Name: containerDiskName,
@@ -109,7 +121,21 @@ func (d *KubeVirtDriver) Create() (string, string, error) {
 	}
 
 	if d.UserData != "" {
-		d.addCloudInitToVMI(instance)
+		d.attachCloudInitDisk(instance)
+	}
+
+	for _, disk := range disks {
+		err := d.attachDisk(instance, disk)
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	for _, network := range networks {
+		err := d.attachNetworkInterface(instance, network)
+		if err != nil {
+			return "", "", err
+		}
 	}
 
 	vmi, err := kubevirt.VirtualMachineInstance(namespace).Create(instance)
@@ -123,7 +149,7 @@ func (d *KubeVirtDriver) Create() (string, string, error) {
 
 }
 
-func (d *KubeVirtDriver) addCloudInitToVMI(vmi *kubevirtv1.VirtualMachineInstance) {
+func (d *KubeVirtDriver) attachCloudInitDisk(vmi *kubevirtv1.VirtualMachineInstance) {
 	vmi.Spec.Domain.Devices.Disks = append(vmi.Spec.Domain.Devices.Disks, kubevirtv1.Disk{
 		Name: cloudInitDiskName,
 	})
@@ -135,6 +161,108 @@ func (d *KubeVirtDriver) addCloudInitToVMI(vmi *kubevirtv1.VirtualMachineInstanc
 			},
 		},
 	})
+}
+
+func (d *KubeVirtDriver) attachDisk(vmi *kubevirtv1.VirtualMachineInstance, disk *v1alpha1.KubeVirtDisk) error {
+	if disk.Name == "" {
+		return fmt.Errorf("Cannot attach disk without name")
+	}
+	if disk.VolumeRef == "" {
+		return fmt.Errorf("Missing volume reference for disk %s", disk.Name)
+	}
+
+	var volumeSource kubevirtv1.VolumeSource
+	switch disk.Type {
+	case volumeTypeConfigMap:
+		volumeSource = kubevirtv1.VolumeSource{
+			ConfigMap: &kubevirtv1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: disk.VolumeRef,
+				},
+			},
+		}
+	case volumeTypeDataVolume:
+		volumeSource = kubevirtv1.VolumeSource{
+			DataVolume: &kubevirtv1.DataVolumeSource{
+				Name: disk.VolumeRef,
+			},
+		}
+	case volumeTypePVC:
+		volumeSource = kubevirtv1.VolumeSource{
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: disk.VolumeRef,
+			},
+		}
+	case volumeTypeSecret:
+		volumeSource = kubevirtv1.VolumeSource{
+			Secret: &kubevirtv1.SecretVolumeSource{
+				SecretName: disk.VolumeRef,
+			},
+		}
+	case volumeTypeServiceAccount:
+		volumeSource = kubevirtv1.VolumeSource{
+			ServiceAccount: &kubevirtv1.ServiceAccountVolumeSource{
+				ServiceAccountName: disk.VolumeRef,
+			},
+		}
+	default:
+		return fmt.Errorf("Unsupported disk type '%s'", disk.Type)
+	}
+
+	vmi.Spec.Domain.Devices.Disks = append(vmi.Spec.Domain.Devices.Disks, kubevirtv1.Disk{
+		Name: disk.Name,
+	})
+	vmi.Spec.Volumes = append(vmi.Spec.Volumes, kubevirtv1.Volume{
+		Name:         disk.Name,
+		VolumeSource: volumeSource,
+	})
+
+	if disk.Serial != "" {
+		vmi.Spec.Domain.Devices.Disks[len(vmi.Spec.Domain.Devices.Disks)-1].Serial = disk.Serial
+	}
+
+	return nil
+}
+
+func (d *KubeVirtDriver) attachNetworkInterface(vmi *kubevirtv1.VirtualMachineInstance, net *v1alpha1.KubeVirtNetworkInterface) error {
+	if net.Name == "" {
+		return fmt.Errorf("Cannot attach interface without network name")
+	}
+
+	var networkSource kubevirtv1.NetworkSource
+	switch net.NetworkType {
+	case networkTypeGenie:
+		networkSource = kubevirtv1.NetworkSource{
+			Genie: &kubevirtv1.CniNetwork{
+				NetworkName: net.NetworkRef,
+			},
+		}
+	case networkTypeMultus:
+		networkSource = kubevirtv1.NetworkSource{
+			Multus: &kubevirtv1.CniNetwork{
+				NetworkName: net.NetworkRef,
+			},
+		}
+	case networkTypePod:
+		networkSource = kubevirtv1.NetworkSource{
+			Pod: &kubevirtv1.PodNetwork{},
+		}
+	default:
+		return fmt.Errorf("Unsupported network type '%s'", net.NetworkType)
+	}
+
+	vmi.Spec.Domain.Devices.Interfaces = append(vmi.Spec.Domain.Devices.Interfaces, kubevirtv1.Interface{
+		Name: net.Name,
+		InterfaceBindingMethod: kubevirtv1.InterfaceBindingMethod{
+			Bridge: &kubevirtv1.InterfaceBridge{},
+		},
+	})
+	vmi.Spec.Networks = append(vmi.Spec.Networks, kubevirtv1.Network{
+		Name:          net.Name,
+		NetworkSource: networkSource,
+	})
+
+	return nil
 }
 
 // Delete method is used to delete an KubeVirt machine
