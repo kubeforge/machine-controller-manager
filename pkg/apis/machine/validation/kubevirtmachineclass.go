@@ -40,10 +40,21 @@ func internalValidateKubeVirtMachineClass(KubeVirtMachineClass *machine.KubeVirt
 func validateKubeVirtMachineClassSpec(spec *machine.KubeVirtMachineClassSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	if "" == spec.ImageName {
+		allErrs = append(allErrs, field.Required(fldPath.Child("imageName"), "imageName is required"))
+	}
+	if "" == spec.Memory {
+		allErrs = append(allErrs, field.Required(fldPath.Child("memory"), "memory is required"))
+	}
+	if "" == spec.Cores {
+		allErrs = append(allErrs, field.Required(fldPath.Child("cores"), "cores is required"))
+	}
 	if "" == spec.PodNetworkCidr {
 		allErrs = append(allErrs, field.Required(fldPath.Child("podNetworkCidr"), "PodNetworkCidr is required"))
 	}
 
+	allErrs = append(allErrs, validateKubeVirtDisks(spec.Disks, field.NewPath("spec.disks"))...)
+	allErrs = append(allErrs, validateKubeVirtNetworkInterfaces(spec.Networks, field.NewPath("spec.networks"))...)
 	allErrs = append(allErrs, validateSecretRef(spec.SecretRef, field.NewPath("spec.secretRef"))...)
 	allErrs = append(allErrs, validateKubeVirtClassSpecTags(spec.Tags, field.NewPath("spec.tags"))...)
 
@@ -68,6 +79,41 @@ func validateKubeVirtClassSpecTags(tags map[string]string, fldPath *field.Path) 
 	}
 	if nodeRole == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("kubernetes.io-role-"), "Tag required of the form kubernetes.io-role-****"))
+	}
+
+	return allErrs
+}
+
+func validateKubeVirtDisks(disks []*machine.KubeVirtDisk, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for i, disk := range disks {
+		idxPath := fldPath.Index(i)
+		if disk.Name == "" {
+			allErrs = append(allErrs, field.Invalid(idxPath.Child("name"), disk.Name, "name is required for disk"))
+		}
+		if disk.Type == "" {
+			allErrs = append(allErrs, field.Invalid(idxPath.Child("type"), disk.Type, "type is required for disk"))
+		}
+		if disk.VolumeRef == "" {
+			allErrs = append(allErrs, field.Invalid(idxPath.Child("volumeRef"), disk.VolumeRef, "volumeRef is required for disk"))
+		}
+	}
+
+	return allErrs
+}
+
+func validateKubeVirtNetworkInterfaces(nets []*machine.KubeVirtNetworkInterface, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for i, net := range nets {
+		idxPath := fldPath.Index(i)
+		if net.Name == "" {
+			allErrs = append(allErrs, field.Invalid(idxPath.Child("name"), net.Name, "name is required for network"))
+		}
+		if net.NetworkType == "" {
+			allErrs = append(allErrs, field.Invalid(idxPath.Child("networkType"), net.NetworkType, "networkType is required for network"))
+		}
 	}
 
 	return allErrs

@@ -1313,12 +1313,29 @@ type KubeVirtMachineClassList struct {
 
 // KubeVirtMachineClassSpec is the specification of a cluster.
 type KubeVirtMachineClassSpec struct {
-	ImageName      string                  `json:"imageName"`
-	Memory         string                  `json:"memory"`
-	Cores          string                  `json:"cores"`
-	Tags           map[string]string       `json:"tags,omitempty"`
-	SecretRef      *corev1.SecretReference `json:"secretRef,omitempty"`
-	PodNetworkCidr string                  `json:"podNetworkCidr"`
+	ImageName      string                      `json:"imageName"`
+	Memory         string                      `json:"memory"`
+	Cores          string                      `json:"cores"`
+	Tags           map[string]string           `json:"tags,omitempty"`
+	SecretRef      *corev1.SecretReference     `json:"secretRef,omitempty"`
+	PodNetworkCidr string                      `json:"podNetworkCidr"`
+	Disks          []*KubeVirtDisk             `json:"disks,omitempty"`
+	Networks       []*KubeVirtNetworkInterface `json:"networks,omitempty"`
 	//Region           string                  `json:"region"`
 	//AvailabilityZone string                  `json:"availabilityZone"`
+}
+
+// KubeVirtDisk describes a disk to mount to a KubeVirt VM
+type KubeVirtDisk struct {
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	VolumeRef string `json:"volumeRef"`
+	Serial    string `json:"serial,omitempty"`
+}
+
+// KubeVirtNetworkInterface describes a network interface for a KubeVirt VM
+type KubeVirtNetworkInterface struct {
+	Name        string `json:"name"`
+	NetworkType string `json:"networkType"`
+	NetworkRef  string `json:"networkRef,omitempty"`
 }

@@ -1503,6 +1503,41 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 			},
 			Dependencies: []string{},
 		},
+		"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1.KubeVirtDisk": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Description: "KubeVirtDisk describes a disk to mount to a KubeVirt VM",
+					Properties: map[string]spec.Schema{
+						"name": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+						"type": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+						"volumeRef": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+						"serial": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+					},
+					Required: []string{"name", "type", "volumeRef"},
+				},
+			},
+			Dependencies: []string{},
+		},
 		"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1.KubeVirtMachineClass": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
@@ -1627,12 +1662,65 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Format: "",
 							},
 						},
+						"disks": {
+							SchemaProps: spec.SchemaProps{
+								Type: []string{"array"},
+								Items: &spec.SchemaOrArray{
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: ref("github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1.KubeVirtDisk"),
+										},
+									},
+								},
+							},
+						},
+						"networks": {
+							SchemaProps: spec.SchemaProps{
+								Type: []string{"array"},
+								Items: &spec.SchemaOrArray{
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: ref("github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1.KubeVirtNetworkInterface"),
+										},
+									},
+								},
+							},
+						},
 					},
 					Required: []string{"imageName", "memory", "cores", "podNetworkCidr"},
 				},
 			},
 			Dependencies: []string{
-				"k8s.io/api/core/v1.SecretReference"},
+				"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1.KubeVirtDisk", "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1.KubeVirtNetworkInterface", "k8s.io/api/core/v1.SecretReference"},
+		},
+		"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1.KubeVirtNetworkInterface": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Description: "KubeVirtNetworkInterface describes a network interface for a KubeVirt VM",
+					Properties: map[string]spec.Schema{
+						"name": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+						"networkType": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+						"networkRef": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+					},
+					Required: []string{"name", "networkType"},
+				},
+			},
+			Dependencies: []string{},
 		},
 		"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1.LastOperation": {
 			Schema: spec.Schema{
