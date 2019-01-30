@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	kubevirtv1 "kubevirt.io/kubevirt/pkg/api/v1"
 	"kubevirt.io/kubevirt/pkg/kubecli"
 )
@@ -346,72 +345,22 @@ func (d *KubeVirtDriver) decodeMachineID(id string) string {
 }
 
 func (d *KubeVirtDriver) createKubevirtClient() (kubecli.KubevirtClient, string, error) {
-	clusterName, ok := d.CloudConfig.Data[v1alpha1.KubeVirtClusterName]
+	kubeconfig, ok := d.CloudConfig.Data[v1alpha1.KubeVirtKubeConfig]
 	if !ok {
-		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtClusterName)
+		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtKubeConfig)
+	}
+	namespace, ok := d.CloudConfig.Data[v1alpha1.KubeVirtNamespace]
+	if !ok {
+		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtNamespace)
 	}
 
-	clusterServer, ok := d.CloudConfig.Data[v1alpha1.KubeVirtClusterServer]
-	if !ok {
-		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtClusterServer)
-	}
-
-	clusterCertificateAuthorityData, ok := d.CloudConfig.Data[v1alpha1.KubeVirtClusterCertificateAuthorityData]
-	if !ok {
-		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtClusterCertificateAuthorityData)
-	}
-
-	authInfoName, ok := d.CloudConfig.Data[v1alpha1.KubeVirtAuthInfoName]
-	if !ok {
-		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtAuthInfoName)
-	}
-
-	authInfoClientCertificateData, ok := d.CloudConfig.Data[v1alpha1.KubeVirtAuthInfoClientCertificateData]
-	if !ok {
-		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtAuthInfoClientCertificateData)
-	}
-
-	authInfoClientKeyData, ok := d.CloudConfig.Data[v1alpha1.KubeVirtAuthInfoClientKeyData]
-	if !ok {
-		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtAuthInfoClientKeyData)
-	}
-
-	contextName, ok := d.CloudConfig.Data[v1alpha1.KubeVirtContextName]
-	if !ok {
-		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtContextName)
-	}
-
-	contextNamespace, ok := d.CloudConfig.Data[v1alpha1.KubeVirtContextNamespace]
-	if !ok {
-		return nil, "", fmt.Errorf("Missing %s in secret", v1alpha1.KubeVirtContextNamespace)
-	}
-
-	config := clientcmdapi.Config{
-		Clusters: map[string]*clientcmdapi.Cluster{
-			string(clusterName): {
-				Server:                   string(clusterServer),
-				CertificateAuthorityData: clusterCertificateAuthorityData,
-			},
-		},
-		AuthInfos: map[string]*clientcmdapi.AuthInfo{
-			string(authInfoName): {
-				ClientCertificateData: authInfoClientCertificateData,
-				ClientKeyData:         authInfoClientKeyData,
-			},
-		},
-		Contexts: map[string]*clientcmdapi.Context{
-			string(contextName): {
-				Cluster:   string(clusterName),
-				AuthInfo:  string(authInfoName),
-				Namespace: string(contextNamespace),
-			},
-		},
-		CurrentContext: string(contextName),
-	}
-	clientConfig := clientcmd.NewDefaultClientConfig(config, &clientcmd.ConfigOverrides{})
-	kubevirtClient, err := kubecli.GetKubevirtClientFromClientConfig(clientConfig)
+	clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
 	if err != nil {
 		return nil, "", err
 	}
-	return kubevirtClient, string(contextNamespace), nil
+	c, err := kubecli.GetKubevirtClientFromClientConfig(clientConfig)
+	if err != nil {
+		return nil, "", err
+	}
+	return c, string(namespace), nil
 }

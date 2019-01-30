@@ -1161,14 +1161,8 @@ const (
 	// PacketAPIKey is a constant for a key name that is part of the Packet cloud credentials
 	PacketAPIKey string = "packetAPIKey"
 
-	KubeVirtClusterName                     string = "clusterName"
-	KubeVirtClusterServer                   string = "clusterServer"
-	KubeVirtClusterCertificateAuthorityData string = "clusterCertificateAuthorityData"
-	KubeVirtAuthInfoName                    string = "authInfoName"
-	KubeVirtAuthInfoClientCertificateData   string = "authInfoClientCertificateData"
-	KubeVirtAuthInfoClientKeyData           string = "authInfoClientKeyData"
-	KubeVirtContextName                     string = "contextName"
-	KubeVirtContextNamespace                string = "contextNamespace"
+	KubeVirtKubeConfig string = "kubeconfig"
+	KubeVirtNamespace  string = "namespace"
 )
 
 /********************** AlicloudMachineClass APIs ***************/
