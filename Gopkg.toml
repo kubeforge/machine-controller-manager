@@ -80,10 +80,4 @@ required = [
 
 [[constraint]]
   name = "kubevirt.io/kubevirt"
-  #version = "v0.11.0"
-  branch = "kubernetes-1.12"
-  source = "github.com/kubeforge/kubevirt"
-
-[[constraint]]
-  name = "kubevirt.io/containerized-data-importer"
-  version = "v1.4.1"
+  revision = "2f1714d09a97ec66f4a5e8674e1ba464398495c4"
