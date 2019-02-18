@@ -80,4 +80,4 @@ required = [
 
 [[constraint]]
   name = "kubevirt.io/kubevirt"
-  revision = "2f1714d09a97ec66f4a5e8674e1ba464398495c4"
+  version = "v0.14.0"
