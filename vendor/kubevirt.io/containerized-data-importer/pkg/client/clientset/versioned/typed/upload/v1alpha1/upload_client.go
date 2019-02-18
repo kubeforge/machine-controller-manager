@@ -21,26 +21,26 @@ package v1alpha1
 import (
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	rest "k8s.io/client-go/rest"
-	v1alpha1 "kubevirt.io/containerized-data-importer/pkg/apis/datavolumecontroller/v1alpha1"
+	v1alpha1 "kubevirt.io/containerized-data-importer/pkg/apis/upload/v1alpha1"
 	"kubevirt.io/containerized-data-importer/pkg/client/clientset/versioned/scheme"
 )
 
-type CdiV1alpha1Interface interface {
+type UploadV1alpha1Interface interface {
 	RESTClient() rest.Interface
-	DataVolumesGetter
+	UploadTokenRequestsGetter
 }
 
-// CdiV1alpha1Client is used to interact with features provided by the cdi.kubevirt.io group.
-type CdiV1alpha1Client struct {
+// UploadV1alpha1Client is used to interact with features provided by the upload.cdi.kubevirt.io group.
+type UploadV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *CdiV1alpha1Client) DataVolumes(namespace string) DataVolumeInterface {
-	return newDataVolumes(c, namespace)
+func (c *UploadV1alpha1Client) UploadTokenRequests(namespace string) UploadTokenRequestInterface {
+	return newUploadTokenRequests(c, namespace)
 }
 
-// NewForConfig creates a new CdiV1alpha1Client for the given config.
-func NewForConfig(c *rest.Config) (*CdiV1alpha1Client, error) {
+// NewForConfig creates a new UploadV1alpha1Client for the given config.
+func NewForConfig(c *rest.Config) (*UploadV1alpha1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
@@ -49,12 +49,12 @@ func NewForConfig(c *rest.Config) (*CdiV1alpha1Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &CdiV1alpha1Client{client}, nil
+	return &UploadV1alpha1Client{client}, nil
 }
 
-// NewForConfigOrDie creates a new CdiV1alpha1Client for the given config and
+// NewForConfigOrDie creates a new UploadV1alpha1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *CdiV1alpha1Client {
+func NewForConfigOrDie(c *rest.Config) *UploadV1alpha1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -62,9 +62,9 @@ func NewForConfigOrDie(c *rest.Config) *CdiV1alpha1Client {
 	return client
 }
 
-// New creates a new CdiV1alpha1Client for the given RESTClient.
-func New(c rest.Interface) *CdiV1alpha1Client {
-	return &CdiV1alpha1Client{c}
+// New creates a new UploadV1alpha1Client for the given RESTClient.
+func New(c rest.Interface) *UploadV1alpha1Client {
+	return &UploadV1alpha1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) error {
@@ -82,7 +82,7 @@ func setConfigDefaults(config *rest.Config) error {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *CdiV1alpha1Client) RESTClient() rest.Interface {
+func (c *UploadV1alpha1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}

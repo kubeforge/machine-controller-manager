@@ -369,7 +369,7 @@
   revision = "0b12d6b5"
 
 [[projects]]
-  digest = "0:"
+  digest = "1:8e36686e8b139f8fe240c1d5cf3a145bc675c22ff8e707857cdd3ae17b00d728"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = "NUT"
@@ -1103,25 +1103,24 @@
   revision = "50ae88d24ede7b8bad68e23c805b5d3da5c8abaf"
 
 [[projects]]
-  digest = "1:84c63d6c2bf9b72359113df598919c6e1b96e461d13f9f268ccee9cb272a7f9c"
+  digest = "1:d526e82d7e6bf74c15a38fd5a0f51bf4ae5c3d0efbe2b2d9713b1a9237e73315"
   name = "kubevirt.io/containerized-data-importer"
   packages = [
-    "pkg/apis/datavolumecontroller",
-    "pkg/apis/datavolumecontroller/v1alpha1",
-    "pkg/apis/uploadcontroller",
-    "pkg/apis/uploadcontroller/v1alpha1",
+    "pkg/apis/core",
+    "pkg/apis/core/v1alpha1",
+    "pkg/apis/upload",
+    "pkg/apis/upload/v1alpha1",
     "pkg/client/clientset/versioned",
     "pkg/client/clientset/versioned/scheme",
-    "pkg/client/clientset/versioned/typed/datavolumecontroller/v1alpha1",
-    "pkg/client/clientset/versioned/typed/uploadcontroller/v1alpha1",
+    "pkg/client/clientset/versioned/typed/core/v1alpha1",
+    "pkg/client/clientset/versioned/typed/upload/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "211c0a0a2c164dcca88ffa74242b7e5ec4cdf2a5"
-  version = "v1.4.1"
+  revision = "1a77897a72bed677e80267da73ae757cf3232d50"
+  version = "v1.5.3"
 
 [[projects]]
-  branch = "kubernetes-1.12"
-  digest = "1:df9344196d37371865ea27e1c95a28e5cd040d24b7da4b0a9fa2ff6fe0198dd3"
+  digest = "1:46eca11ffbcebd8ef3600634885b67dbc63f43dd794f5ebdfd821b342e6988ab"
   name = "kubevirt.io/kubevirt"
   packages = [
     "pkg/api/v1",
@@ -1131,8 +1130,8 @@
     "pkg/version",
   ]
   pruneopts = "NUT"
-  revision = "2b1ccc3eac3fb3841ac82557c2844f2eee1ce580"
-  source = "github.com/kubeforge/kubevirt"
+  revision = "99129b309dae399061d38924744ded0ec0ea72c9"
+  version = "v0.14.0"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -1219,7 +1218,6 @@
     "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
-    "k8s.io/client-go/tools/clientcmd/api",
     "k8s.io/client-go/tools/leaderelection",
     "k8s.io/client-go/tools/leaderelection/resourcelock",
     "k8s.io/client-go/tools/metrics",
