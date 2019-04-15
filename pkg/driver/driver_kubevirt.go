@@ -18,6 +18,7 @@ limitations under the License.
 package driver
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -25,6 +26,7 @@ import (
 	v1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
@@ -119,8 +121,13 @@ func (d *KubeVirtDriver) Create() (string, string, error) {
 		},
 	}
 
+	var secret *corev1.Secret
 	if d.UserData != "" {
-		d.attachCloudInitDisk(instance)
+		secret, err = d.ensureUserDataSecret(kubevirt, namespace)
+		if err != nil {
+			return "", "", err
+		}
+		d.attachCloudInitDisk(instance, secret.ObjectMeta.Name)
 	}
 
 	for _, disk := range disks {
@@ -144,11 +151,25 @@ func (d *KubeVirtDriver) Create() (string, string, error) {
 
 	d.MachineID = d.encodeMachineID(vmi.ObjectMeta.Name)
 	glog.V(3).Infof("Created machine with ID: %s", d.MachineID)
+
+	if d.UserData != "" {
+		// Reference this new VMI as owner of the userdata secret
+		secret.ObjectMeta.OwnerReferences = append(secret.ObjectMeta.OwnerReferences, metav1.OwnerReference{
+			APIVersion: vmi.TypeMeta.APIVersion,
+			Kind:       vmi.TypeMeta.Kind,
+			Name:       vmi.ObjectMeta.Name,
+			UID:        vmi.ObjectMeta.UID,
+		})
+		_, err := kubevirt.CoreV1().Secrets(secret.ObjectMeta.Namespace).Update(secret)
+		if err != nil {
+			glog.V(3).Infof("Failed to add machine %s as owner of secret %s", vmi.ObjectMeta.Name, secret.ObjectMeta.Name)
+		}
+	}
 	return d.MachineID, d.MachineName, nil
 
 }
 
-func (d *KubeVirtDriver) attachCloudInitDisk(vmi *kubevirtv1.VirtualMachineInstance) {
+func (d *KubeVirtDriver) attachCloudInitDisk(vmi *kubevirtv1.VirtualMachineInstance, secretRef string) {
 	vmi.Spec.Domain.Devices.Disks = append(vmi.Spec.Domain.Devices.Disks, kubevirtv1.Disk{
 		Name: cloudInitDiskName,
 	})
@@ -156,7 +177,9 @@ func (d *KubeVirtDriver) attachCloudInitDisk(vmi *kubevirtv1.VirtualMachineInsta
 		Name: cloudInitDiskName,
 		VolumeSource: kubevirtv1.VolumeSource{
 			CloudInitNoCloud: &kubevirtv1.CloudInitNoCloudSource{
-				UserData: d.UserData,
+				UserDataSecretRef: &corev1.LocalObjectReference{
+					Name: secretRef,
+				},
 			},
 		},
 	})
@@ -266,22 +289,25 @@ func (d *KubeVirtDriver) attachNetworkInterface(vmi *kubevirtv1.VirtualMachineIn
 
 // Delete method is used to delete an KubeVirt machine
 func (d *KubeVirtDriver) Delete() error {
-	res, err := d.GetVMs(d.MachineID)
-	if err != nil {
-		return err
-	} else if len(res) == 0 {
-		// No running instance exists with the given machine-ID
-		glog.V(2).Infof("No VM matching the machine-ID found on the provider %q", d.MachineID)
-		return nil
-	}
-
-	machineName := d.decodeMachineID(d.MachineID)
 	kubevirt, namespace, err := d.createKubevirtClient()
 	if err != nil {
 		return fmt.Errorf("Failed to create KubeVirt client: %v", err)
 	}
 
-	if err := kubevirt.VirtualMachineInstance(namespace).Delete(machineName, &metav1.DeleteOptions{}); err != nil {
+	machineName := d.decodeMachineID(d.MachineID)
+
+	// Set delete propagation to ensure that userdata secret gets deleted after the last
+	// VMI disappears from the cluster
+	deletePropagation := metav1.DeletePropagationBackground
+	deleteOptions := &metav1.DeleteOptions{
+		PropagationPolicy: &deletePropagation,
+	}
+
+	if err := kubevirt.VirtualMachineInstance(namespace).Delete(machineName, deleteOptions); err != nil {
+		if errors.IsNotFound(err) {
+			glog.V(3).Infof("No VM matching the machine-ID found on the provider %q", d.MachineID)
+			return nil
+		}
 		return fmt.Errorf("Failed to delete machine %s: %v", d.MachineID, err)
 	}
 
@@ -298,15 +324,11 @@ func (d *KubeVirtDriver) GetExisting() (string, error) {
 // If machineID is an empty string then it returns all matching instances
 func (d *KubeVirtDriver) GetVMs(machineID string) (VMs, error) {
 	vms := make(map[string]string)
-
-	// Build label selectors to list all available machines
-	labelSelectorOps := make([]string, 0)
-	for k, v := range d.KubeVirtMachineClass.Spec.Tags {
-		labelSelectorOps = append(labelSelectorOps, fmt.Sprintf("%s=%s", k, v))
+	kubevirt, namespace, err := d.createKubevirtClient()
+	if err != nil {
+		return vms, fmt.Errorf("Failed to create KubeVirt client: %v", err)
 	}
-	labelSelector := strings.Join(labelSelectorOps, ",")
-
-	vmis, err := d.listVMIs(labelSelector)
+	vmis, err := d.listVMIs(kubevirt, namespace)
 	if err != nil {
 		return vms, fmt.Errorf("Failed to list machines: %v", err)
 	}
@@ -323,11 +345,14 @@ func (d *KubeVirtDriver) GetVMs(machineID string) (VMs, error) {
 	return vms, nil
 }
 
-func (d *KubeVirtDriver) listVMIs(labelSelector string) ([]kubevirtv1.VirtualMachineInstance, error) {
-	kubevirt, namespace, err := d.createKubevirtClient()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create KubeVirt client: %v", err)
+func (d *KubeVirtDriver) listVMIs(kubevirt kubecli.KubevirtClient, namespace string) ([]kubevirtv1.VirtualMachineInstance, error) {
+	// Build label selectors to list all available machines
+	labelSelectorOps := make([]string, 0)
+	for k, v := range d.KubeVirtMachineClass.Spec.Tags {
+		labelSelectorOps = append(labelSelectorOps, fmt.Sprintf("%s=%s", k, v))
 	}
+	labelSelector := strings.Join(labelSelectorOps, ",")
+
 	vmis, err := kubevirt.VirtualMachineInstance(namespace).List(&metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return nil, err
@@ -342,6 +367,56 @@ func (d *KubeVirtDriver) encodeMachineID(machineName string) string {
 func (d *KubeVirtDriver) decodeMachineID(id string) string {
 	splitProviderID := strings.Split(id, "/")
 	return splitProviderID[len(splitProviderID)-1]
+}
+
+func (d *KubeVirtDriver) ensureUserDataSecret(kubevirt kubecli.KubevirtClient, namespace string) (*corev1.Secret, error) {
+	secretName := d.KubeVirtMachineClass.ObjectMeta.Name
+	userdata := []byte(d.UserData)
+	expectedSecret := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+			Labels:    d.KubeVirtMachineClass.Spec.Tags,
+		},
+		Data: map[string][]byte{
+			"userdata": userdata,
+		},
+	}
+
+	secret, secFound, err := d.getUserDataSecret(kubevirt, secretName, namespace)
+	if err != nil {
+		return &corev1.Secret{}, err
+	}
+	if secFound {
+		// Secret found -> Update if required
+		secUserdata, ok := secret.Data["userdata"]
+		if !ok || !bytes.Equal(secUserdata, userdata) {
+			secret, err = kubevirt.CoreV1().Secrets(namespace).Update(&expectedSecret)
+			if err != nil {
+				return &corev1.Secret{}, err
+			}
+			glog.V(3).Infof("Updated user data secret %s", secretName)
+		}
+		return secret, nil
+	}
+	// Secret not found -> create it
+	secret, err = kubevirt.CoreV1().Secrets(namespace).Create(&expectedSecret)
+	if err != nil {
+		return &corev1.Secret{}, err
+	}
+	glog.V(3).Infof("Created user data secret %s", secretName)
+	return secret, nil
+}
+
+func (d *KubeVirtDriver) getUserDataSecret(kubevirt kubecli.KubevirtClient, name, namespace string) (*corev1.Secret, bool, error) {
+	secret, err := kubevirt.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return secret, true, nil
 }
 
 func (d *KubeVirtDriver) createKubevirtClient() (kubecli.KubevirtClient, string, error) {
