@@ -46,6 +46,18 @@ func (CloudInitNoCloudSource) SwaggerDoc() map[string]string {
 	}
 }
 
+func (CloudInitConfigDriveSource) SwaggerDoc() map[string]string {
+	return map[string]string{
+		"":                     "Represents a cloud-init config drive user data source.\nMore info: https://cloudinit.readthedocs.io/en/latest/topics/datasources/configdrive.html",
+		"secretRef":            "UserDataSecretRef references a k8s secret that contains config drive userdata.\n+ optional",
+		"userDataBase64":       "UserDataBase64 contains config drive cloud-init userdata as a base64 encoded string.\n+ optional",
+		"userData":             "UserData contains config drive inline cloud-init userdata.\n+ optional",
+		"networkDataSecretRef": "NetworkDataSecretRef references a k8s secret that contains config drive networkdata.\n+ optional",
+		"networkDataBase64":    "NetworkDataBase64 contains config drive cloud-init networkdata as a base64 encoded string.\n+ optional",
+		"networkData":          "NetworkData contains config drive inline cloud-init networkdata.\n+ optional",
+	}
+}
+
 func (DomainSpec) SwaggerDoc() map[string]string {
 	return map[string]string{
 		"resources":       "Resources describes the Compute Resources required by this vmi.",
@@ -94,8 +106,17 @@ func (CPU) SwaggerDoc() map[string]string {
 		"cores":                 "Cores specifies the number of cores inside the vmi.\nMust be a value greater or equal 1.",
 		"sockets":               "Sockets specifies the number of sockets inside the vmi.\nMust be a value greater or equal 1.",
 		"threads":               "Threads specifies the number of threads inside the vmi.\nMust be a value greater or equal 1.",
-		"model":                 "Model specifies the CPU model inside the VMI.\nList of available models https://github.com/libvirt/libvirt/blob/master/src/cpu/cpu_map.xml.\nIt is possible to specify special cases like \"host-passthrough\" to get the same CPU as the node\nand \"host-model\" to get CPU closest to the node one.\nFor more information see https://libvirt.org/formatdomain.html#elementsCPU.\nDefaults to host-model.\n+optional",
+		"model":                 "Model specifies the CPU model inside the VMI.\nList of available models https://github.com/libvirt/libvirt/blob/master/src/cpu/cpu_map.xml.\nIt is possible to specify special cases like \"host-passthrough\" to get the same CPU as the node\nand \"host-model\" to get CPU closest to the node one.\nDefaults to host-model.\n+optional",
+		"features":              "Features specifies the CPU features list inside the VMI.\n+optional",
 		"dedicatedCpuPlacement": "DedicatedCPUPlacement requests the scheduler to place the VirtualMachineInstance on a node\nwith enough dedicated pCPUs and pin the vCPUs to it.\n+optional",
+	}
+}
+
+func (CPUFeature) SwaggerDoc() map[string]string {
+	return map[string]string{
+		"":       "CPUFeature allows specifying a CPU feature.",
+		"name":   "Name of the CPU feature",
+		"policy": "Policy is the CPU feature attribute which can have the following attributes:\nforce    - The virtual CPU will claim the feature is supported regardless of it being supported by host CPU.\nrequire  - Guest creation will fail unless the feature is supported by the host CPU or the hypervisor is able to emulate it.\noptional - The feature will be supported by virtual CPU if and only if it is supported by host CPU.\ndisable  - The feature will not be supported by virtual CPU.\nforbid   - Guest creation will fail if the feature is supported by host CPU.\nDefaults to require\n+optional",
 	}
 }
 
@@ -124,6 +145,7 @@ func (Firmware) SwaggerDoc() map[string]string {
 	return map[string]string{
 		"uuid":       "UUID reported by the vmi bios.\nDefaults to a random generated uid.",
 		"bootloader": "Settings to control the bootloader that is used.\n+optional",
+		"serial":     "The system-serial-number in SMBIOS",
 	}
 }
 
@@ -132,11 +154,20 @@ func (Devices) SwaggerDoc() map[string]string {
 		"disks":                      "Disks describes disks, cdroms, floppy and luns which are connected to the vmi.",
 		"watchdog":                   "Watchdog describes a watchdog device which can be added to the vmi.",
 		"interfaces":                 "Interfaces describe network interfaces which are added to the vmi.",
+		"inputs":                     "Inputs describe input devices",
 		"autoattachPodInterface":     "Whether to attach a pod network interface. Defaults to true.",
 		"autoattachGraphicsDevice":   "Whether to attach the default graphics device or not.\nVNC will not be available if set to false. Defaults to true.",
 		"rng":                        "Whether to have random number generator from host\n+optional",
 		"blockMultiQueue":            "Whether or not to enable virtio multi-queue for block devices\n+optional",
 		"networkInterfaceMultiqueue": "If specified, virtual network interfaces configured with a virtio bus will also enable the vhost multiqueue feature\n+optional",
+	}
+}
+
+func (Input) SwaggerDoc() map[string]string {
+	return map[string]string{
+		"bus":  "Bus indicates the bus of input device to emulate.\nSupported values: virtio, usb.",
+		"type": "Type indicated the type of input device.\nSupported values: tablet.",
+		"name": "Name is the device name",
 	}
 }
 
@@ -203,6 +234,7 @@ func (VolumeSource) SwaggerDoc() map[string]string {
 		"hostDisk":              "HostDisk represents a disk created on the cluster level\n+optional",
 		"persistentVolumeClaim": "PersistentVolumeClaimVolumeSource represents a reference to a PersistentVolumeClaim in the same namespace.\nDirectly attached to the vmi via qemu.\nMore info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims\n+optional",
 		"cloudInitNoCloud":      "CloudInitNoCloud represents a cloud-init NoCloud user-data source.\nThe NoCloud data will be added as a disk to the vmi. A proper cloud-init installation is required inside the guest.\nMore info: http://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html\n+optional",
+		"cloudInitConfigDrive":  "CloudInitConfigDrive represents a cloud-init Config Drive user-data source.\nThe Config Drive data will be added as a disk to the vmi. A proper cloud-init installation is required inside the guest.\nMore info: https://cloudinit.readthedocs.io/en/latest/topics/datasources/configdrive.html\n+optional",
 		"containerDisk":         "ContainerDisk references a docker image, embedding a qcow or raw disk.\nMore info: https://kubevirt.gitbooks.io/user-guide/registry-disk.html\n+optional",
 		"ephemeral":             "Ephemeral is a special volume source that \"wraps\" specified source and provides copy-on-write image on top of it.\n+optional",
 		"emptyDisk":             "EmptyDisk represents a temporary disk which shares the vmis lifecycle.\nMore info: https://kubevirt.gitbooks.io/user-guide/disks-and-volumes.html\n+optional",
@@ -399,6 +431,15 @@ func (DHCPOptions) SwaggerDoc() map[string]string {
 		"bootFileName":   "If specified will pass option 67 to interface's DHCP server\n+optional",
 		"tftpServerName": "If specified will pass option 66 to interface's DHCP server\n+optional",
 		"ntpServers":     "If specified will pass the configured NTP server to the VM via DHCP option 042.\n+optional",
+		"privateOptions": "If specified will pass extra DHCP options for private use, range: 224-254\n+optional",
+	}
+}
+
+func (DHCPPrivateOptions) SwaggerDoc() map[string]string {
+	return map[string]string{
+		"":       "DHCPExtraOptions defines Extra DHCP options for a VM.",
+		"option": "Option is an Integer value from 224-254\nRequired.",
+		"value":  "Value is a String value for the Option provided\nRequired.",
 	}
 }
 
@@ -459,9 +500,17 @@ func (Rng) SwaggerDoc() map[string]string {
 	}
 }
 
-func (CniNetwork) SwaggerDoc() map[string]string {
+func (GenieNetwork) SwaggerDoc() map[string]string {
 	return map[string]string{
-		"":            "Represents the cni network.",
-		"networkName": "References to a NetworkAttachmentDefinition CRD object. Format:\n<networkName>, <namespace>/<networkName>. If namespace is not\nspecified, VMI namespace is assumed.\nIn case of genie, it references the CNI plugin name.",
+		"":            "Represents the genie cni network.",
+		"networkName": "References the CNI plugin name.",
+	}
+}
+
+func (MultusNetwork) SwaggerDoc() map[string]string {
+	return map[string]string{
+		"":            "Represents the multus cni network.",
+		"networkName": "References to a NetworkAttachmentDefinition CRD object. Format:\n<networkName>, <namespace>/<networkName>. If namespace is not\nspecified, VMI namespace is assumed.",
+		"default":     "Select the default network and add it to the\nmultus-cni.io/default-network annotation.",
 	}
 }

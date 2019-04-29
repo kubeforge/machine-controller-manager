@@ -115,6 +115,31 @@ type CloudInitNoCloudSource struct {
 	NetworkData string `json:"networkData,omitempty"`
 }
 
+// Represents a cloud-init config drive user data source.
+// More info: https://cloudinit.readthedocs.io/en/latest/topics/datasources/configdrive.html
+// ---
+// +k8s:openapi-gen=true
+type CloudInitConfigDriveSource struct {
+	// UserDataSecretRef references a k8s secret that contains config drive userdata.
+	// + optional
+	UserDataSecretRef *v1.LocalObjectReference `json:"secretRef,omitempty"`
+	// UserDataBase64 contains config drive cloud-init userdata as a base64 encoded string.
+	// + optional
+	UserDataBase64 string `json:"userDataBase64,omitempty"`
+	// UserData contains config drive inline cloud-init userdata.
+	// + optional
+	UserData string `json:"userData,omitempty"`
+	// NetworkDataSecretRef references a k8s secret that contains config drive networkdata.
+	// + optional
+	NetworkDataSecretRef *v1.LocalObjectReference `json:"networkDataSecretRef,omitempty"`
+	// NetworkDataBase64 contains config drive cloud-init networkdata as a base64 encoded string.
+	// + optional
+	NetworkDataBase64 string `json:"networkDataBase64,omitempty"`
+	// NetworkData contains config drive inline cloud-init networkdata.
+	// + optional
+	NetworkData string `json:"networkData,omitempty"`
+}
+
 // ---
 // +k8s:openapi-gen=true
 type DomainSpec struct {
@@ -206,14 +231,33 @@ type CPU struct {
 	// List of available models https://github.com/libvirt/libvirt/blob/master/src/cpu/cpu_map.xml.
 	// It is possible to specify special cases like "host-passthrough" to get the same CPU as the node
 	// and "host-model" to get CPU closest to the node one.
-	// For more information see https://libvirt.org/formatdomain.html#elementsCPU.
 	// Defaults to host-model.
 	// +optional
 	Model string `json:"model,omitempty"`
+	// Features specifies the CPU features list inside the VMI.
+	// +optional
+	Features []CPUFeature `json:"features,omitempty"`
 	// DedicatedCPUPlacement requests the scheduler to place the VirtualMachineInstance on a node
 	// with enough dedicated pCPUs and pin the vCPUs to it.
 	// +optional
 	DedicatedCPUPlacement bool `json:"dedicatedCpuPlacement,omitempty"`
+}
+
+// CPUFeature allows specifying a CPU feature.
+// ---
+// +k8s:openapi-gen=true
+type CPUFeature struct {
+	// Name of the CPU feature
+	Name string `json:"name"`
+	// Policy is the CPU feature attribute which can have the following attributes:
+	// force    - The virtual CPU will claim the feature is supported regardless of it being supported by host CPU.
+	// require  - Guest creation will fail unless the feature is supported by the host CPU or the hypervisor is able to emulate it.
+	// optional - The feature will be supported by virtual CPU if and only if it is supported by host CPU.
+	// disable  - The feature will not be supported by virtual CPU.
+	// forbid   - Guest creation will fail if the feature is supported by host CPU.
+	// Defaults to require
+	// +optional
+	Policy string `json:"policy,omitempty"`
 }
 
 // Memory allows specifying the VirtualMachineInstance memory features.
@@ -254,6 +298,8 @@ type Firmware struct {
 	// Settings to control the bootloader that is used.
 	// +optional
 	Bootloader *Bootloader `json:"bootloader,omitempty"`
+	// The system-serial-number in SMBIOS
+	Serial string `json:"serial,omitempty"`
 }
 
 // ---
@@ -265,6 +311,8 @@ type Devices struct {
 	Watchdog *Watchdog `json:"watchdog,omitempty"`
 	// Interfaces describe network interfaces which are added to the vmi.
 	Interfaces []Interface `json:"interfaces,omitempty"`
+	// Inputs describe input devices
+	Inputs []Input `json:"inputs,omitempty"`
 	// Whether to attach a pod network interface. Defaults to true.
 	AutoattachPodInterface *bool `json:"autoattachPodInterface,omitempty"`
 	// Whether to attach the default graphics device or not.
@@ -279,6 +327,19 @@ type Devices struct {
 	// If specified, virtual network interfaces configured with a virtio bus will also enable the vhost multiqueue feature
 	// +optional
 	NetworkInterfaceMultiQueue *bool `json:"networkInterfaceMultiqueue,omitempty"`
+}
+
+// ---
+// +k8s:openapi-gen=true
+type Input struct {
+	// Bus indicates the bus of input device to emulate.
+	// Supported values: virtio, usb.
+	Bus string `json:"bus,omitempty"`
+	// Type indicated the type of input device.
+	// Supported values: tablet.
+	Type string `json:"type"`
+	// Name is the device name
+	Name string `json:"name"`
 }
 
 // ---
@@ -420,6 +481,11 @@ type VolumeSource struct {
 	// More info: http://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html
 	// +optional
 	CloudInitNoCloud *CloudInitNoCloudSource `json:"cloudInitNoCloud,omitempty"`
+	// CloudInitConfigDrive represents a cloud-init Config Drive user-data source.
+	// The Config Drive data will be added as a disk to the vmi. A proper cloud-init installation is required inside the guest.
+	// More info: https://cloudinit.readthedocs.io/en/latest/topics/datasources/configdrive.html
+	// +optional
+	CloudInitConfigDrive *CloudInitConfigDriveSource `json:"cloudInitConfigDrive,omitempty"`
 	// ContainerDisk references a docker image, embedding a qcow or raw disk.
 	// More info: https://kubevirt.gitbooks.io/user-guide/registry-disk.html
 	// +optional
@@ -862,6 +928,19 @@ type DHCPOptions struct {
 	// If specified will pass the configured NTP server to the VM via DHCP option 042.
 	// +optional
 	NTPServers []string `json:"ntpServers,omitempty"`
+	// If specified will pass extra DHCP options for private use, range: 224-254
+	// +optional
+	PrivateOptions []DHCPPrivateOptions `json:"privateOptions,omitempty"`
+}
+
+// DHCPExtraOptions defines Extra DHCP options for a VM.
+type DHCPPrivateOptions struct {
+	// Option is an Integer value from 224-254
+	// Required.
+	Option int `json:"option"`
+	// Value is a String value for the Option provided
+	// Required.
+	Value string `json:"value"`
 }
 
 // Represents the method which will be used to connect the interface to the guest.
@@ -929,9 +1008,9 @@ type Network struct {
 // ---
 // +k8s:openapi-gen=true
 type NetworkSource struct {
-	Pod    *PodNetwork `json:"pod,omitempty"`
-	Multus *CniNetwork `json:"multus,omitempty"`
-	Genie  *CniNetwork `json:"genie,omitempty"`
+	Pod    *PodNetwork    `json:"pod,omitempty"`
+	Multus *MultusNetwork `json:"multus,omitempty"`
+	Genie  *GenieNetwork  `json:"genie,omitempty"`
 }
 
 // Represents the stock pod network interface.
@@ -949,13 +1028,24 @@ type PodNetwork struct {
 type Rng struct {
 }
 
-// Represents the cni network.
+// Represents the genie cni network.
 // ---
 // +k8s:openapi-gen=true
-type CniNetwork struct {
+type GenieNetwork struct {
+	// References the CNI plugin name.
+	NetworkName string `json:"networkName"`
+}
+
+// Represents the multus cni network.
+// ---
+// +k8s:openapi-gen=true
+type MultusNetwork struct {
 	// References to a NetworkAttachmentDefinition CRD object. Format:
 	// <networkName>, <namespace>/<networkName>. If namespace is not
 	// specified, VMI namespace is assumed.
-	// In case of genie, it references the CNI plugin name.
 	NetworkName string `json:"networkName"`
+
+	// Select the default network and add it to the
+	// multus-cni.io/default-network annotation.
+	Default bool `json:"default,omitempty"`
 }

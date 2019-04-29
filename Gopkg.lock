@@ -369,7 +369,7 @@
   revision = "0b12d6b5"
 
 [[projects]]
-  digest = "1:8e36686e8b139f8fe240c1d5cf3a145bc675c22ff8e707857cdd3ae17b00d728"
+  digest = "0:"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = "NUT"
@@ -1120,7 +1120,8 @@
   version = "v1.5.3"
 
 [[projects]]
-  digest = "1:46eca11ffbcebd8ef3600634885b67dbc63f43dd794f5ebdfd821b342e6988ab"
+  branch = "kubeforge"
+  digest = "1:93e9e470025671aeb5412eeebeee2e5062b86fd32db5cb406a2fd09b8f526a72"
   name = "kubevirt.io/kubevirt"
   packages = [
     "pkg/api/v1",
@@ -1130,8 +1131,8 @@
     "pkg/version",
   ]
   pruneopts = "NUT"
-  revision = "99129b309dae399061d38924744ded0ec0ea72c9"
-  version = "v0.14.0"
+  revision = "e047c19b6b213608387dd1178e5621a4d8d94432"
+  source = "github.com/kubeforge/kubevirt"
 
 [solve-meta]
   analyzer-name = "dep"
