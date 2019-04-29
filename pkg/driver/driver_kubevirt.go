@@ -176,7 +176,7 @@ func (d *KubeVirtDriver) attachCloudInitDisk(vmi *kubevirtv1.VirtualMachineInsta
 	vmi.Spec.Volumes = append(vmi.Spec.Volumes, kubevirtv1.Volume{
 		Name: cloudInitDiskName,
 		VolumeSource: kubevirtv1.VolumeSource{
-			CloudInitNoCloud: &kubevirtv1.CloudInitNoCloudSource{
+			CloudInitConfigDrive: &kubevirtv1.CloudInitConfigDriveSource{
 				UserDataSecretRef: &corev1.LocalObjectReference{
 					Name: secretRef,
 				},
@@ -255,13 +255,13 @@ func (d *KubeVirtDriver) attachNetworkInterface(vmi *kubevirtv1.VirtualMachineIn
 	switch net.NetworkType {
 	case networkTypeGenie:
 		networkSource = kubevirtv1.NetworkSource{
-			Genie: &kubevirtv1.CniNetwork{
+			Genie: &kubevirtv1.GenieNetwork{
 				NetworkName: net.NetworkRef,
 			},
 		}
 	case networkTypeMultus:
 		networkSource = kubevirtv1.NetworkSource{
-			Multus: &kubevirtv1.CniNetwork{
+			Multus: &kubevirtv1.MultusNetwork{
 				NetworkName: net.NetworkRef,
 			},
 		}
